@@ -10,6 +10,7 @@ import com.ldtteam.blockui.views.DropDownList;
 import com.ldtteam.structurize.client.gui.WindowSwitchPack;
 import com.ldtteam.structurize.storage.StructurePacks;
 import com.minecolonies.core.client.gui.WindowBannerPicker;
+import com.minecolonies.core.client.gui.WindowHireWorker;
 import com.minecolonies.core.client.gui.map.WindowColonyMap;
 import com.minecolonies.core.colony.buildings.workerbuildings.BuildingTownHall;
 import com.minecolonies.core.network.messages.server.colony.ColonyNameStyleMessage;
@@ -95,6 +96,14 @@ public class WindowMainPage extends AbstractWindowTownHall
         registerButton(BUTTON_CHANGE_SPEC, this::doNothing);
         registerButton(BUTTON_RENAME, this::renameClicked);
         registerButton(BUTTON_MERCENARY, this::mercenaryClicked);
+        // ZM: the professions are assigned in the existing hire window of the Town Hall, which lists the modules the Town Hall hosts
+        registerButton(BUTTON_PROFESSIONS, this::professionsClicked);
+        if (building.getBuildingLevel() < 1)
+        {
+            final ButtonImage professionsButton = findPaneOfTypeByID(BUTTON_PROFESSIONS, ButtonImage.class);
+            professionsButton.disable();
+            PaneBuilders.tooltipBuilder().hoverPane(professionsButton).build().setText(Component.translatable("com.minecolonies.coremod.gui.townhall.professions.nobuilt"));
+        }
         registerButton(BUTTON_TOWNHALLMAP, this::mapButtonClicked);
         registerButton(BUTTON_PATREON, this::patreonClicked);
 
@@ -389,6 +398,14 @@ public class WindowMainPage extends AbstractWindowTownHall
     private void mercenaryClicked()
     {
         new WindowTownHallMercenary(buildingView.getColony()).open();
+    }
+
+    /**
+     * Opens the hire window of the Town Hall, where the professions are assigned.
+     */
+    private void professionsClicked()
+    {
+        new WindowHireWorker(buildingView.getColony(), buildingView.getPosition()).open();
     }
 
     /**

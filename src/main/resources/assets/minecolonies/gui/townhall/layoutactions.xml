@@ -21,6 +21,11 @@
     <button id="mercenaries" size="129 17" pos="110 136"  color="black"
                  label="$(com.minecolonies.coremod.gui.townhall.mercenary)" source="minecolonies:textures/gui/builderhut/builder_button_medium_large_merc.png"/>
 
+    <!-- ZM: opens the hire window of the Town Hall to assign professions -->
+    <button id="professions" size="129 17" pos="110 155"  color="black"
+                 label="$(com.minecolonies.coremod.gui.townhall.professions)" source="minecolonies:textures/gui/builderhut/builder_button_medium_large.png"
+                 disabled="minecolonies:textures/gui/builderhut/builder_button_medium_large_disabled.png"/>
+
     <!-- Visual Changes, Right Side -->
 
     <text label="$(com.minecolonies.coremod.gui.townhall.visual)" textalign="MIDDLE" pos="280 35" size="129 11" color="black"/>

@@ -88,6 +88,11 @@ public final class WindowConstants
     public static final String BUTTON_MERCENARY = "mercenaries";
 
     /**
+     * Id of the professions button of the Town Hall in the GUI.
+     */
+    public static final String BUTTON_PROFESSIONS = "professions";
+
+    /**
      * Id of the mercenary button in the GUI.
      */
     public static final String BUTTON_TOWNHALLMAP = "map";

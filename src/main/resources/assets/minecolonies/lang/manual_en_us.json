@@ -537,6 +537,8 @@
   "com.minecolonies.coremod.gui.townhall.repair": "Repair Town Hall",
 
   "com.minecolonies.coremod.gui.townhall.mercenary": "Hire Mercenaries",
+  "com.minecolonies.coremod.gui.townhall.professions": "Professions",
+  "com.minecolonies.coremod.gui.townhall.professions.nobuilt": "The Town Hall must be built before it can assign professions.",
   "com.minecolonies.coremod.gui.townhall.mercenary.title": "Mercenary Help",
   "com.minecolonies.coremod.gui.townhall.mercenaryhire": "Hire",
   "com.minecolonies.coremod.gui.townhall.mercenarystory": "You've encountered some Mercenaries near your colony, and they offer to help with defending your colony. A price they did not name, but you get the feeling that they will not leave bare-handed. Hire at your own risk!",
