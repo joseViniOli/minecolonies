@@ -12,6 +12,7 @@ import com.minecolonies.api.util.Tuple;
 import com.minecolonies.api.util.constant.CitizenConstants;
 import com.minecolonies.core.MineColonies;
 import com.minecolonies.core.colony.buildings.moduleviews.CombinedHiringLimitModuleView;
+import com.minecolonies.core.colony.buildings.moduleviews.TownHallAssignmentModuleView;
 import com.minecolonies.core.colony.buildings.moduleviews.WorkerBuildingModuleView;
 import com.minecolonies.core.colony.buildings.views.AbstractBuildingView;
 import com.minecolonies.core.colony.buildings.workerbuildings.BuildingTownHall;
@@ -147,6 +148,12 @@ public class WindowStatsPage extends AbstractWindowTownHall
                         max += module.getAssignedCitizens().size();
                     }
                     int workers = module.getAssignedCitizens().size();
+
+                    // ZM: the Town Hall hosts a module for every Tier 1 job, hide the ones without slots and workers
+                    if (module instanceof TownHallAssignmentModuleView && max == 0 && workers == 0)
+                    {
+                        continue;
+                    }
 
                     final String jobName = module.getJobDisplayName().toLowerCase(Locale.US);
 

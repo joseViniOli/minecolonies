@@ -391,6 +391,13 @@ public final class ModBuildingsInitializer
           .setBuildingViewProducer(() -> BuildingTownHall.View::new)
           .setRegistryName(new ResourceLocation(Constants.MOD_ID, ModBuildings.TOWNHALL_ID))
           .addBuildingModuleProducer(TOWNHALL_SETTINGS)
+          // ZM: professions the Town Hall can assign without a hut
+          .addBuildingModuleProducer(TOWNHALL_LUMBERJACK_WORK)
+          .addBuildingModuleProducer(TOWNHALL_BUILDER_WORK)
+          .addBuildingModuleProducer(TOWNHALL_FARMER_WORK)
+          .addBuildingModuleProducer(TOWNHALL_QUARRIER_WORK)
+          .addBuildingModuleProducer(TOWNHALL_KNIGHT_WORK)
+          .addBuildingModuleProducer(TOWNHALL_RANGER_WORK)
           .createBuildingEntry());
 
         ModBuildings.wareHouse = DEFERRED_REGISTER.register(ModBuildings.WAREHOUSE_ID, () -> new BuildingEntry.Builder()

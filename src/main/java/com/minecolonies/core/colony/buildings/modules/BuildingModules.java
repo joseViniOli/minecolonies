@@ -529,6 +529,33 @@ public class BuildingModules
         .with(BuildingTownHall.CONSTRUCTION_TAPE, new BoolSetting(true)),
         () -> TownHallSettingsModuleView::new);
 
+    // ZM: Assignment modules hosted by the Town Hall, so the player can give a profession from the Town Hall without a hut. One per job. The key is the NBT key and must be
+    // unique in the game (a repeated key throws), so never reuse the keys of the huts (forester_work etc.). Slots come from TownHallProfessions.
+    public static final BuildingEntry.ModuleProducer<TownHallAssignmentModule,TownHallAssignmentModuleView> TOWNHALL_LUMBERJACK_WORK =
+      new BuildingEntry.ModuleProducer<>("townhall_lumberjack_work",
+        () -> new TownHallAssignmentModule(ModJobs.lumberjack.get(), Skill.Strength, Skill.Focus, false),
+        () -> TownHallAssignmentModuleView::new);
+    public static final BuildingEntry.ModuleProducer<TownHallAssignmentModule,TownHallAssignmentModuleView> TOWNHALL_BUILDER_WORK    =
+      new BuildingEntry.ModuleProducer<>("townhall_builder_work",
+        () -> new TownHallAssignmentModule(ModJobs.builder.get(), Skill.Adaptability, Skill.Athletics, false),
+        () -> TownHallAssignmentModuleView::new);
+    public static final BuildingEntry.ModuleProducer<TownHallAssignmentModule,TownHallAssignmentModuleView> TOWNHALL_FARMER_WORK     =
+      new BuildingEntry.ModuleProducer<>("townhall_farmer_work",
+        () -> new TownHallAssignmentModule(ModJobs.farmer.get(), Skill.Stamina, Skill.Athletics, false),
+        () -> TownHallAssignmentModuleView::new);
+    public static final BuildingEntry.ModuleProducer<TownHallAssignmentModule,TownHallAssignmentModuleView> TOWNHALL_QUARRIER_WORK   =
+      new BuildingEntry.ModuleProducer<>("townhall_quarrier_work",
+        () -> new TownHallAssignmentModule(ModJobs.quarrier.get(), Skill.Strength, Skill.Stamina, false),
+        () -> TownHallAssignmentModuleView::new);
+    public static final BuildingEntry.ModuleProducer<TownHallAssignmentModule,TownHallAssignmentModuleView> TOWNHALL_KNIGHT_WORK     =
+      new BuildingEntry.ModuleProducer<>("townhall_knight_work",
+        () -> new TownHallAssignmentModule(ModJobs.knight.get(), Skill.Adaptability, Skill.Stamina, true),
+        () -> TownHallAssignmentModuleView::new);
+    public static final BuildingEntry.ModuleProducer<TownHallAssignmentModule,TownHallAssignmentModuleView> TOWNHALL_RANGER_WORK     =
+      new BuildingEntry.ModuleProducer<>("townhall_ranger_work",
+        () -> new TownHallAssignmentModule(ModJobs.archer.get(), Skill.Agility, Skill.Adaptability, true),
+        () -> TownHallAssignmentModuleView::new);
+
     /**
      * Military
      */
