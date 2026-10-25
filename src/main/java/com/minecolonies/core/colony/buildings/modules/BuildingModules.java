@@ -525,7 +525,8 @@ public class BuildingModules
         .with(BuildingTownHall.MOVE_IN, new BoolSetting(true))
         .with(BuildingTownHall.ENTER_LEAVE_MESSAGES, new BoolSetting(true))
         .with(BuildingTownHall.AUTO_HOUSING_MODE, new BoolSetting(true))
-        .with(BuildingTownHall.AUTO_HIRING_MODE, new BoolSetting(true))
+        // ZM: off by default, the player decides the professions from the Town Hall (the setting can still be turned on)
+        .with(BuildingTownHall.AUTO_HIRING_MODE, new BoolSetting(false))
         .with(BuildingTownHall.CONSTRUCTION_TAPE, new BoolSetting(true)),
         () -> TownHallSettingsModuleView::new);
 
