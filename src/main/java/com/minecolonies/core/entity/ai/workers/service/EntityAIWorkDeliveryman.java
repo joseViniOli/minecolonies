@@ -415,11 +415,12 @@ public class EntityAIWorkDeliveryman extends AbstractEntityAIInteract<JobDeliver
                     // Meaning, replacing failed.
                     success = false;
 
-                    if (targetBuilding.hasModule(WorkerBuildingModule.class))
+                    // ZM: only a module that has a worker, the Town Hall hosts modules that may be empty
+                    if (targetBuilding.hasModule(WorkerBuildingModule.class, module -> module.hasAssignedCitizen()))
                     {
                         worker.getCitizenData()
                           .triggerInteraction(new PosBasedInteraction(Component.translatableEscape(COM_MINECOLONIES_COREMOD_JOB_DELIVERYMAN_NAMEDCHESTFULL,
-                            targetBuilding.getFirstModuleOccurance(WorkerBuildingModule.class).getFirstCitizen().getName()),
+                            targetBuilding.getModule(WorkerBuildingModule.class, module -> module.hasAssignedCitizen()).getFirstCitizen().getName()),
                             ChatPriority.IMPORTANT,
                             Component.translatableEscape(COM_MINECOLONIES_COREMOD_JOB_DELIVERYMAN_NAMEDCHESTFULL),
                             targetBuilding.getID()));

@@ -38,6 +38,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 import static com.minecolonies.api.util.constant.ColonyConstants.MAX_COLONY_EVENTS;
+import static com.minecolonies.api.util.constant.EquipmentLevelConstants.TOOL_LEVEL_WOOD_OR_GOLD;
 import static com.minecolonies.api.util.constant.Constants.MOD_ID;
 
 /**
@@ -212,6 +213,18 @@ public class BuildingTownHall extends AbstractBuilding implements ITownHall
     public boolean canBeGathered()
     {
         return false;
+    }
+
+    /**
+     * ZM: Villagers hosted by the Town Hall (a profession without a hut) only use wooden or golden tools. The default of IBuilding would give them stone tools from level 1 and
+     * any tool on the highest level. Better tools come from the hut of their profession.
+     *
+     * @return the wooden tool level.
+     */
+    @Override
+    public int getMaxEquipmentLevel()
+    {
+        return TOOL_LEVEL_WOOD_OR_GOLD;
     }
 
     /**

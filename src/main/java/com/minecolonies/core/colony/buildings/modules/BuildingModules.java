@@ -536,6 +536,9 @@ public class BuildingModules
       new BuildingEntry.ModuleProducer<>("townhall_lumberjack_work",
         () -> new TownHallAssignmentModule(ModJobs.lumberjack.get(), Skill.Strength, Skill.Focus, false),
         () -> TownHallAssignmentModuleView::new);
+    // ZM: Workplace data of the lumberjack hosted by the Town Hall (server only), read by EntityAIWorkLumberjack when its workplace is not a hut.
+    public static final BuildingEntry.ModuleProducer<TownHallLumberjackModule,IBuildingModuleView> TOWNHALL_LUMBERJACK_WORKPLACE =
+      new BuildingEntry.ModuleProducer<>("townhall_lumberjack_workplace", TownHallLumberjackModule::new, null);
     public static final BuildingEntry.ModuleProducer<TownHallAssignmentModule,TownHallAssignmentModuleView> TOWNHALL_BUILDER_WORK    =
       new BuildingEntry.ModuleProducer<>("townhall_builder_work",
         () -> new TownHallAssignmentModule(ModJobs.builder.get(), Skill.Adaptability, Skill.Athletics, false),

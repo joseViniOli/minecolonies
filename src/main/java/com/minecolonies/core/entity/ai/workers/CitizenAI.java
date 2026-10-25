@@ -318,6 +318,13 @@ public class CitizenAI implements IStateAI
 
         if (colonyHandler.getWorkBuilding() != null)
         {
+            // ZM: the Town Hall hosts several worker modules, so use the one this citizen is assigned to; a hut has a single module, the first one is the same as before.
+            final WorkerBuildingModule ownModule = colonyHandler.getWorkBuilding().getModule(WorkerBuildingModule.class, m -> m.hasAssignedCitizen(citizen.getCitizenData()));
+            if (ownModule != null)
+            {
+                return ownModule.canWorkDuringTheRain();
+            }
+
             if (colonyHandler.getWorkBuilding().hasModule(WorkerBuildingModule.class))
             {
                 return colonyHandler.getWorkBuilding().getFirstModuleOccurance(WorkerBuildingModule.class).canWorkDuringTheRain();

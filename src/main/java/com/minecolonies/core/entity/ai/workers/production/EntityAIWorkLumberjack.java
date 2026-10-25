@@ -1,6 +1,8 @@
 package com.minecolonies.core.entity.ai.workers.production;
 
 import com.minecolonies.api.colony.IColonyManager;
+import com.minecolonies.api.colony.buildings.IBuilding;
+import com.minecolonies.api.colony.buildings.workerbuildings.ILumberjackWorkplace;
 import com.minecolonies.api.compatibility.Compatibility;
 import com.minecolonies.api.entity.ai.statemachine.AITarget;
 import com.minecolonies.api.entity.ai.statemachine.states.IAIState;
@@ -58,7 +60,8 @@ import static com.minecolonies.core.colony.buildings.modules.BuildingModules.STA
 /**
  * The lumberjack AI class.
  */
-public class EntityAIWorkLumberjack extends AbstractEntityAICrafting<JobLumberjack, BuildingLumberjack>
+// ZM: B is AbstractBuilding, the workplace is a lumberjack hut or a building that hosts the lumberjack (the Town Hall), see isAcceptedWorkBuilding.
+public class EntityAIWorkLumberjack extends AbstractEntityAICrafting<JobLumberjack, AbstractBuilding>
 {
     /**
      * The render name to render logs.
@@ -173,6 +176,11 @@ public class EntityAIWorkLumberjack extends AbstractEntityAICrafting<JobLumberja
      */
     private PathResult<?> pathToTree;
 
+    /**
+     * ZM: The workplace data, see {@link #workplace()}.
+     */
+    private ILumberjackWorkplace workplace;
+
     @Override
     protected int getActionRewardForCraftingSuccess()
     {
@@ -202,9 +210,36 @@ public class EntityAIWorkLumberjack extends AbstractEntityAICrafting<JobLumberja
     }
 
     @Override
-    public Class<BuildingLumberjack> getExpectedBuildingClass()
+    public Class<AbstractBuilding> getExpectedBuildingClass()
     {
-        return BuildingLumberjack.class;
+        return AbstractBuilding.class;
+    }
+
+    /**
+     * ZM: Accepts the lumberjack hut and any building that hosts the lumberjack workplace module, which is the Town Hall.
+     *
+     * @param candidate the work building of the citizen.
+     * @return true if the lumberjack can work there.
+     */
+    @Override
+    protected boolean isAcceptedWorkBuilding(@Nullable final IBuilding candidate)
+    {
+        return candidate instanceof BuildingLumberjack
+                 || (candidate instanceof final AbstractBuilding hosting && hosting.hasModule(BuildingModules.TOWNHALL_LUMBERJACK_WORKPLACE));
+    }
+
+    /**
+     * ZM: The workplace data (replant, restricted area, ...) of this lumberjack: the hut itself, or the module the Town Hall hosts.
+     *
+     * @return the workplace data.
+     */
+    private ILumberjackWorkplace workplace()
+    {
+        if (workplace == null)
+        {
+            workplace = building instanceof final ILumberjackWorkplace hut ? hut : building.getModule(BuildingModules.TOWNHALL_LUMBERJACK_WORKPLACE);
+        }
+        return workplace;
     }
 
     @Override
@@ -291,7 +326,7 @@ public class EntityAIWorkLumberjack extends AbstractEntityAICrafting<JobLumberja
      */
     private IAIState prepareForWoodcutting()
     {
-        if (checkForToolOrWeapon(ModEquipmentTypes.axe.get()) || checkForToolOrWeapon(building.getSetting(AbstractBuilding.USE_SHEARS).getValue() ? ModEquipmentTypes.shears.get() : ModEquipmentTypes.hoe.get()))
+        if (checkForToolOrWeapon(ModEquipmentTypes.axe.get()) || checkForToolOrWeapon(workplace().shouldUseShears() ? ModEquipmentTypes.shears.get() : ModEquipmentTypes.hoe.get()))
         {
             // Reset everything, maybe there are new crafting requests
             return START_WORKING;
@@ -324,12 +359,12 @@ public class EntityAIWorkLumberjack extends AbstractEntityAICrafting<JobLumberja
      */
     private IAIState gathering2()
     {
-        if (building.shouldRestrict())
+        if (workplace().shouldRestrict())
         {
             if (getItemsForPickUp() == null)
             {
                 // search for interesting items in our restriction zone, if we ran out of trees
-                searchForItems(AABB.encapsulatingFullBlocks(building.getStartRestriction(), building.getEndRestriction())
+                searchForItems(AABB.encapsulatingFullBlocks(workplace().getStartRestriction(), workplace().getEndRestriction())
                                  .inflate(RANGE_HORIZONTAL_PICKUP, RANGE_VERTICAL_PICKUP, RANGE_HORIZONTAL_PICKUP));
             }
 
@@ -400,17 +435,17 @@ public class EntityAIWorkLumberjack extends AbstractEntityAICrafting<JobLumberja
         }
         if (pathResult == null)
         {
-            if (building.shouldRestrict())
+            if (workplace().shouldRestrict())
             {
-                final BlockPos startPos = building.getStartRestriction();
-                final BlockPos endPos = building.getEndRestriction();
+                final BlockPos startPos = workplace().getStartRestriction();
+                final BlockPos endPos = workplace().getEndRestriction();
 
                 pathResult = worker.getNavigation()
                     .walkToTree(startPos,
                                  endPos,
                                  1.0D,
                                  building.getModuleMatching(ItemListModule.class, m -> m.getId().equals(SAPLINGS_LIST)).getList(),
-                                 building.getSetting(BuildingLumberjack.DYNAMIC_TREES_SIZE).getValue(),
+                                 workplace().getDynamicTreesSize(),
                                  worker.getCitizenColonyHandler().getColonyOrRegister());
             }
             else
@@ -419,7 +454,7 @@ public class EntityAIWorkLumberjack extends AbstractEntityAICrafting<JobLumberja
                     .walkToTree(SEARCH_RANGE + searchIncrement,
                                  1.0D,
                                  building.getModuleMatching(ItemListModule.class, m -> m.getId().equals(SAPLINGS_LIST)).getList(),
-                                 building.getSetting(BuildingLumberjack.DYNAMIC_TREES_SIZE).getValue(),
+                                 workplace().getDynamicTreesSize(),
                                  worker.getCitizenColonyHandler().getColonyOrRegister());
             }
             return getState();
@@ -433,11 +468,11 @@ public class EntityAIWorkLumberjack extends AbstractEntityAICrafting<JobLumberja
         return LUMBERJACK_NO_TREES_FOUND;
     }
 
-    private IAIState setNewTree(final BuildingLumberjack building)
+    private IAIState setNewTree(final AbstractBuilding building)
     {
         if (pathResult.treeLocation == null)
         {
-            if (!building.shouldRestrict() && searchIncrement + SEARCH_RANGE <= SEARCH_LIMIT)
+            if (!workplace().shouldRestrict() && searchIncrement + SEARCH_RANGE <= SEARCH_LIMIT)
             {
                 searchIncrement += SEARCH_INCREMENT;
                 setDelay(WAIT_BEFORE_INCREMENT);
@@ -449,12 +484,12 @@ public class EntityAIWorkLumberjack extends AbstractEntityAICrafting<JobLumberja
         }
         else
         {
-            job.setTree(new Tree(world, pathResult.treeLocation, building.shouldRestrict() ? null : building.getColony()));
+            job.setTree(new Tree(world, pathResult.treeLocation, workplace().shouldRestrict() ? null : building.getColony()));
 
             // Check if tree creation was successful
             if (job.getTree().isTree())
             {
-                job.getTree().findLogs(world, building.shouldRestrict() ? null : building.getColony());
+                job.getTree().findLogs(world, workplace().shouldRestrict() ? null : building.getColony());
                 return LUMBERJACK_CHOP_TREE;
             }
             else
@@ -494,9 +529,9 @@ public class EntityAIWorkLumberjack extends AbstractEntityAICrafting<JobLumberja
      */
     private IAIState chopTree()
     {
-        final boolean shouldBreakLeaves = building.shouldDefoliate() || job.getTree().isNetherTree();
+        final boolean shouldBreakLeaves = workplace().shouldDefoliate() || job.getTree().isNetherTree();
 
-        if (building.shouldRestrict() && !BlockPosUtil.isInArea(building.getStartRestriction(), building.getEndRestriction(), job.getTree().getLocation()))
+        if (workplace().shouldRestrict() && !BlockPosUtil.isInArea(workplace().getStartRestriction(), workplace().getEndRestriction(), job.getTree().getLocation()))
         {
             job.setTree(null);
             pathResult = null;
@@ -522,7 +557,7 @@ public class EntityAIWorkLumberjack extends AbstractEntityAICrafting<JobLumberja
                 return getState();
             }
 
-            if (building.shouldReplant())
+            if (workplace().shouldReplant())
             {
                 plantSapling();
             }
@@ -602,7 +637,11 @@ public class EntityAIWorkLumberjack extends AbstractEntityAICrafting<JobLumberja
         super.onBlockDropReception(blockDrops);
         for (final ItemStack stack : blockDrops)
         {
-            building.getModule(STATS_MODULE).incrementBy(ITEM_OBTAINED + ";" + stack.getItem().getDescriptionId(), stack.getCount());
+            // ZM: the Town Hall has no statistics module
+            if (building.hasModule(STATS_MODULE))
+            {
+                building.getModule(STATS_MODULE).incrementBy(ITEM_OBTAINED + ";" + stack.getItem().getDescriptionId(), stack.getCount());
+            }
         }
     }
 
@@ -918,7 +957,7 @@ public class EntityAIWorkLumberjack extends AbstractEntityAICrafting<JobLumberja
             final ItemStack sapling = getInventory().getStackInSlot(saplingSlot);
             if (sapling.is(Tags.Items.MUSHROOMS))
             {
-                building.addNetherTree(pos);
+                workplace().addNetherTree(pos);
             }
             else if (sapling.is(fungi))
             {
@@ -926,7 +965,7 @@ public class EntityAIWorkLumberjack extends AbstractEntityAICrafting<JobLumberja
                 {
                     final Block new_block = sapling.is(Items.WARPED_FUNGUS) ? Blocks.WARPED_NYLIUM : Blocks.CRIMSON_NYLIUM;
                     world.setBlockAndUpdate(pos.below(), new_block.defaultBlockState());
-                    building.addNetherTree(pos);
+                    workplace().addNetherTree(pos);
                 }
             }
 

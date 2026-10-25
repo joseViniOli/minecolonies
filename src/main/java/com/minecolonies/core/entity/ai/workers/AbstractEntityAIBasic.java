@@ -186,7 +186,8 @@ public abstract class AbstractEntityAIBasic<J extends AbstractJob<?, J>, B exten
     protected AbstractEntityAIBasic(@NotNull final J job)
     {
         super(job);
-        if (!getExpectedBuildingClass().isInstance(worker.getCitizenData().getWorkBuilding()))
+        // ZM: through a hook, so a profession can also work for a building that is not its hut (the Town Hall hosts professions)
+        if (!isAcceptedWorkBuilding(worker.getCitizenData().getWorkBuilding()))
         {
             building = null;
             worker.getCitizenData().setJob(null);
@@ -329,6 +330,18 @@ public abstract class AbstractEntityAIBasic<J extends AbstractJob<?, J>, B exten
      * @return the building type associated with this AI's worker.
      */
     public abstract Class<B> getExpectedBuildingClass();
+
+    /**
+     * ZM: Check if a building is accepted as the workplace of this AI. By default only the expected hut class is. An AI that also works for other buildings, like the lumberjack
+     * for the Town Hall, overrides this and must then not rely on its own fields, because it is called while the AI is created.
+     *
+     * @param candidate the work building of the citizen, may be null.
+     * @return true if the AI can work there.
+     */
+    protected boolean isAcceptedWorkBuilding(@Nullable final IBuilding candidate)
+    {
+        return getExpectedBuildingClass().isInstance(candidate);
+    }
 
     /**
      * Can be overridden in implementations to return the exact building type.

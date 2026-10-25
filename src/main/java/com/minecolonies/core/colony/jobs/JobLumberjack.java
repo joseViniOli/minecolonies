@@ -1,6 +1,6 @@
 package com.minecolonies.core.colony.jobs;
 
-import com.minecolonies.core.colony.buildings.modules.BuildingModules;
+import com.minecolonies.api.colony.buildings.IBuildingWorkerModule;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.resources.ResourceLocation;
 import com.minecolonies.api.client.render.modeltype.ModModelTypes;
@@ -83,11 +83,11 @@ public class JobLumberjack extends AbstractJobCrafter<EntityAIWorkLumberjack, Jo
     @Override
     public void onLevelUp()
     {
-        if (getCitizen().getEntity().isPresent())
+        // ZM: the work module is not always the hut's (the Town Hall hosts its own), so ask the job for it instead of the hut.
+        if (getCitizen().getEntity().isPresent() && getWorkModule() instanceof final IBuildingWorkerModule workerModule)
         {
             final AbstractEntityCitizen worker = getCitizen().getEntity().get();
-            final AttributeModifier speedModifier = new AttributeModifier(SKILL_BONUS_ADD_NAME, (getCitizen().getCitizenSkillHandler().getLevel(getCitizen().getWorkBuilding().getModule(
-              BuildingModules.FORESTER_WORK).getSecondarySkill()) / 2.0) * BONUS_SPEED_PER_LEVEL, AttributeModifier.Operation.ADD_VALUE);
+            final AttributeModifier speedModifier = new AttributeModifier(SKILL_BONUS_ADD_NAME, (getCitizen().getCitizenSkillHandler().getLevel(workerModule.getSecondarySkill()) / 2.0) * BONUS_SPEED_PER_LEVEL, AttributeModifier.Operation.ADD_VALUE);
             AttributeModifierUtils.addModifier(worker, speedModifier, Attributes.MOVEMENT_SPEED);
         }
     }

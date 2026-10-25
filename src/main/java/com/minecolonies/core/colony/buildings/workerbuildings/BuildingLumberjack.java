@@ -6,6 +6,7 @@ import com.minecolonies.api.colony.IColonyManager;
 import com.minecolonies.api.colony.IColonyView;
 import com.minecolonies.api.colony.buildings.modules.IItemListModule;
 import com.minecolonies.api.colony.buildings.modules.settings.ISettingKey;
+import com.minecolonies.api.colony.buildings.workerbuildings.ILumberjackWorkplace;
 import com.minecolonies.api.colony.jobs.registry.JobEntry;
 import com.minecolonies.api.colony.requestsystem.token.IToken;
 import com.minecolonies.api.crafting.ItemStorage;
@@ -50,7 +51,7 @@ import static com.minecolonies.core.entity.ai.workers.production.EntityAIWorkLum
 /**
  * The lumberjacks building.
  */
-public class BuildingLumberjack extends AbstractBuilding
+public class BuildingLumberjack extends AbstractBuilding implements ILumberjackWorkplace
 {
     /**
      * Replant setting.
@@ -243,6 +244,19 @@ public class BuildingLumberjack extends AbstractBuilding
             }
         }
         return getSetting(RESTRICT).getValue();
+    }
+
+    // ZM: the AI reads these two from ILumberjackWorkplace instead of the settings of this class, so it can also work for the Town Hall.
+    @Override
+    public boolean shouldUseShears()
+    {
+        return getSetting(USE_SHEARS).getValue();
+    }
+
+    @Override
+    public int getDynamicTreesSize()
+    {
+        return getSetting(DYNAMIC_TREES_SIZE).getValue();
     }
 
     public void setRestrictedArea(final BlockPos startPosition, final BlockPos endPosition)
