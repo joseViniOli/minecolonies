@@ -26,6 +26,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -138,26 +139,45 @@ public class WorkerBuildingModule extends AbstractAssignedCitizenModule
         {
             final CompoundTag jobCompound = compound.getCompound(jobEntry.getKey().toString());
             final int[] residentIds = jobCompound.getIntArray(TAG_WORKING_RESIDENTS);
+            // ZM: collected and assigned through a hook, so the Town Hall can apply its overflow rule (see TownHallAssignmentModule)
+            final List<ICitizenData> loaded = new ArrayList<>();
             for (final int citizenId : residentIds)
             {
                 final ICitizenData citizen = building.getColony().getCitizenManager().getCivilian(citizenId);
                 if (citizen != null)
                 {
-                    assignCitizen(citizen);
+                    loaded.add(citizen);
                 }
             }
+            assignLoadedCitizens(loaded);
         }
         else
         {
             final int[] residentIds = compound.getIntArray(TAG_WORKING_RESIDENTS);
+            // ZM: collected and assigned through a hook, so the Town Hall can apply its overflow rule (see TownHallAssignmentModule)
+            final List<ICitizenData> loaded = new ArrayList<>();
             for (final int citizenId : residentIds)
             {
                 final ICitizenData citizen = building.getColony().getCitizenManager().getCivilian(citizenId);
                 if (citizen != null)
                 {
-                    assignCitizen(citizen);
+                    loaded.add(citizen);
                 }
             }
+            assignLoadedCitizens(loaded);
+        }
+    }
+
+    /**
+     * ZM: Assign the citizens read from the NBT, in the stored order. A module may override it to decide who stays when there are more citizens than slots.
+     *
+     * @param loaded the citizens listed in the saved data of this module.
+     */
+    protected void assignLoadedCitizens(final List<ICitizenData> loaded)
+    {
+        for (final ICitizenData citizen : loaded)
+        {
+            assignCitizen(citizen);
         }
     }
 

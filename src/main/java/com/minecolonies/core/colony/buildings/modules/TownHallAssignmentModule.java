@@ -13,6 +13,7 @@ import com.minecolonies.api.colony.jobs.registry.JobEntry;
 import com.minecolonies.api.colony.requestsystem.resolver.IRequestResolver;
 import com.minecolonies.api.entity.citizen.AbstractEntityCitizen;
 import com.minecolonies.api.entity.citizen.Skill;
+import com.minecolonies.api.util.Log;
 import com.minecolonies.api.util.constant.TypeConstants;
 import com.minecolonies.core.colony.requestsystem.resolvers.BuildingRequestResolver;
 import com.minecolonies.core.colony.townhall.TownHallProfessions;
@@ -20,6 +21,8 @@ import com.minecolonies.core.util.AttributeModifierUtils;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -85,14 +88,104 @@ public class TownHallAssignmentModule extends WorkerBuildingModule implements IB
     }
 
     /**
-     * The Town Hall never picks a jobless villager by itself: the player assigns the professions.
+     * The Town Hall never picks a jobless villager by itself: the player assigns the professions. It only enforces the overflow rule, see {@link #enforceSlots()}.
      *
      * @param colony the colony that ticks.
      */
     @Override
     public void onColonyTick(@NotNull final IColony colony)
     {
-        // Intentionally empty, see class comment.
+        enforceSlots();
+    }
+
+    /**
+     * Overflow rule at load: when the saved villagers are more than the slots (the Town Hall level fell, the table changed), the ones with the lowest ids keep the profession and the
+     * highest ids lose it, with a warning in the log. The result does not depend on the order the villagers were saved in.
+     *
+     * @param loaded the citizens listed in the saved data of this module.
+     */
+    @Override
+    protected void assignLoadedCitizens(final List<ICitizenData> loaded)
+    {
+        final List<ICitizenData> sorted = new ArrayList<>(loaded);
+        sorted.sort(Comparator.comparingInt(ICitizenData::getId));
+        for (final ICitizenData citizen : sorted)
+        {
+            if (assignedCitizen.contains(citizen))
+            {
+                continue;
+            }
+
+            if (isFull())
+            {
+                if (citizen.getJob() != null && citizen.getJob().getJobRegistryEntry() == getJobEntry())
+                {
+                    warnOverflow(citizen);
+                    // Only the job is removed, the villager stays alive in the colony.
+                    citizen.setJob(null);
+                }
+                continue;
+            }
+            assignCitizen(citizen);
+        }
+    }
+
+    /**
+     * Overflow rule while the game runs: when a profession has more villagers than slots, the ones with the highest ids lose it, with a warning in the log. Villagers within the
+     * slots are never touched. All modules of one profession (knight and ranger share their slots) are looked at together, by the first of them only.
+     */
+    private void enforceSlots()
+    {
+        final Optional<TownHallProfessions.Profession> profession = TownHallProfessions.byJob(getJobEntry().getKey().getPath());
+        final List<TownHallAssignmentModule> group = new ArrayList<>();
+        for (final TownHallAssignmentModule module : building.getModulesByType(TownHallAssignmentModule.class))
+        {
+            if (profession.isPresent() ? profession.get().getJobPaths().contains(module.getJobEntry().getKey().getPath()) : module == this)
+            {
+                group.add(module);
+            }
+        }
+        if (group.isEmpty() || group.get(0) != this)
+        {
+            return;
+        }
+
+        final List<ICitizenData> workers = new ArrayList<>();
+        for (final TownHallAssignmentModule module : group)
+        {
+            workers.addAll(module.assignedCitizen);
+        }
+
+        final int slots = getModuleMax();
+        if (workers.size() <= slots)
+        {
+            return;
+        }
+
+        workers.sort(Comparator.comparingInt(ICitizenData::getId));
+        for (final ICitizenData citizen : new ArrayList<>(workers.subList(slots, workers.size())))
+        {
+            warnOverflow(citizen);
+            for (final TownHallAssignmentModule module : group)
+            {
+                if (module.assignedCitizen.contains(citizen))
+                {
+                    // Removes the job and frees the slot, the villager stays alive in the colony.
+                    module.removeCitizen(citizen);
+                    break;
+                }
+            }
+        }
+    }
+
+    private void warnOverflow(final ICitizenData citizen)
+    {
+        Log.getLogger().warn("Town Hall of colony {} (level {}) has fewer {} slots than villagers: villager {} (id {}) loses the profession and stays in the colony.",
+          building.getColony().getID(),
+          building.getBuildingLevel(),
+          getJobEntry().getKey().getPath(),
+          citizen.getName(),
+          citizen.getId());
     }
 
     @Override
