@@ -5,17 +5,21 @@ import com.minecolonies.api.IMinecoloniesAPI;
 import com.minecolonies.api.colony.ICitizenData;
 import com.minecolonies.api.colony.IColony;
 import com.minecolonies.api.colony.buildings.IBuilding;
+import com.minecolonies.api.colony.buildings.HiringMode;
 import com.minecolonies.api.colony.buildings.IBuildingWorkerModule;
 import com.minecolonies.api.colony.buildings.modules.*;
 import com.minecolonies.api.colony.jobs.IJob;
+import com.minecolonies.api.colony.jobs.ModJobs;
 import com.minecolonies.api.colony.jobs.registry.JobEntry;
 import com.minecolonies.api.colony.requestsystem.resolver.IRequestResolver;
 import com.minecolonies.api.entity.citizen.AbstractEntityCitizen;
 import com.minecolonies.api.entity.citizen.Skill;
+import com.minecolonies.api.util.Log;
 import com.minecolonies.api.util.constant.TypeConstants;
 import com.minecolonies.core.colony.requestsystem.resolvers.BuildingRequestResolver;
 import com.minecolonies.core.colony.requestsystem.resolvers.PrivateWorkerCraftingProductionResolver;
 import com.minecolonies.core.colony.requestsystem.resolvers.PrivateWorkerCraftingRequestResolver;
+import com.minecolonies.core.colony.buildings.workerbuildings.BuildingTownHall;
 import com.minecolonies.core.util.BuildingUtils;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -184,6 +188,9 @@ public class WorkerBuildingModule extends AbstractAssignedCitizenModule
     @Override
     public void onColonyTick(@NotNull final IColony colony)
     {
+        // ZM: a worker hosted by the Town Hall moves into a finished hut before anybody else is hired
+        migrateHostedWorker();
+
         // If we have no active worker, grab one from the Colony
         if (!isFull() && BuildingUtils.canAutoHire(building, getHiringMode(), getJobEntry()) && (researchRequirement == null || colony.getResearchManager().getResearchEffects().getEffectStrength(researchRequirement) > 0))
         {
@@ -263,6 +270,73 @@ public class WorkerBuildingModule extends AbstractAssignedCitizenModule
             }
         }
         building.getColony().getCitizenManager().calculateMaxCitizens();
+
+        // ZM: the hut is finished, a worker hosted by the Town Hall moves in
+        migrateHostedWorker();
+    }
+
+    /**
+     * ZM: Move a worker of this profession that is hosted by the Town Hall into this hut, when the hut is finished and has no worker at all. A hut that already has an occupant is
+     * left alone, the player moves workers by hand then. A hut set to manual or locked hiring is left alone as well. The hosted worker with the lowest id goes first. A hosted builder
+     * only moves while idle, so it does not drop a work order it has claimed. The Town Hall slot is freed by {@link com.minecolonies.core.colony.jobs.AbstractJob#assignTo}.
+     */
+    private void migrateHostedWorker()
+    {
+        if (building instanceof BuildingTownHall || !building.canAssignCitizens() || isFull() || hasAssignedCitizen()
+              || getHiringMode() == HiringMode.MANUAL || getHiringMode() == HiringMode.LOCKED
+              || (researchRequirement != null && building.getColony().getResearchManager().getResearchEffects().getEffectStrength(researchRequirement) <= 0))
+        {
+            return;
+        }
+
+        final IBuilding townHall = building.getColony().getServerBuildingManager().getTownHall();
+        if (townHall == null)
+        {
+            return;
+        }
+
+        ICitizenData candidate = null;
+        for (final TownHallAssignmentModule hosted : townHall.getModulesByType(TownHallAssignmentModule.class))
+        {
+            if (!hosted.getJobEntry().equals(jobEntry))
+            {
+                continue;
+            }
+
+            for (final ICitizenData worker : hosted.getAssignedCitizen())
+            {
+                if (canMigrate(worker) && (candidate == null || worker.getId() < candidate.getId()))
+                {
+                    candidate = worker;
+                }
+            }
+        }
+
+        if (candidate != null && assignCitizen(candidate))
+        {
+            Log.getLogger().info("Colony {}: villager {} (id {}) moved from the Town Hall to the finished {} at {}.",
+              building.getColony().getID(), candidate.getName(), candidate.getId(), jobEntry.getKey().getPath(), building.getPosition());
+        }
+    }
+
+    /**
+     * ZM: Whether a hosted worker may move now.
+     *
+     * @param worker the hosted worker.
+     * @return false for a builder that is not idle.
+     */
+    private boolean canMigrate(final ICitizenData worker)
+    {
+        final IJob<?> job = worker.getJob();
+        if (job == null)
+        {
+            return false;
+        }
+        if (job.getJobRegistryEntry() == ModJobs.builder.get())
+        {
+            return job.getWorkerAI() == null || job.isIdling();
+        }
+        return true;
     }
 
     /**
