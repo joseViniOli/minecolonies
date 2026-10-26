@@ -6,6 +6,7 @@ import com.minecolonies.api.colony.IColonyManager;
 import com.minecolonies.api.colony.buildingextensions.IBuildingExtension;
 import com.minecolonies.api.colony.buildingextensions.registry.BuildingExtensionRegistries;
 import com.minecolonies.api.colony.buildings.modules.settings.ISettingKey;
+import com.minecolonies.api.colony.buildings.workerbuildings.IFarmerWorkplace;
 import com.minecolonies.api.colony.jobs.registry.JobEntry;
 import com.minecolonies.api.crafting.GenericRecipe;
 import com.minecolonies.api.crafting.IGenericRecipe;
@@ -20,9 +21,12 @@ import com.minecolonies.core.colony.buildingextensions.FarmField;
 import com.minecolonies.core.colony.buildings.AbstractBuilding;
 import com.minecolonies.core.colony.buildings.modules.AbstractCraftingBuildingModule;
 import com.minecolonies.core.colony.buildings.modules.BuildingExtensionsModule;
+import com.minecolonies.core.colony.buildings.modules.BuildingModules;
+import com.minecolonies.core.colony.buildings.modules.TownHallFarmerModule;
 import com.minecolonies.core.colony.buildings.modules.settings.BoolSetting;
 import com.minecolonies.core.colony.buildings.modules.settings.SettingKey;
 import com.minecolonies.core.colony.buildings.moduleviews.FieldsModuleView;
+import com.minecolonies.core.colony.townhall.TownHallProfessions;
 import com.minecolonies.core.items.ItemCrop;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
@@ -66,7 +70,7 @@ import static com.minecolonies.api.util.constant.translation.GuiTranslationConst
 /**
  * Class which handles the farmer building.
  */
-public class BuildingFarmer extends AbstractBuilding
+public class BuildingFarmer extends AbstractBuilding implements IFarmerWorkplace
 {
     /**
      * The beekeeper mode.
@@ -182,6 +186,7 @@ public class BuildingFarmer extends AbstractBuilding
     /**
      * Getter for request fertilizer
      */
+    @Override
     public boolean requestFertilizer()
     {
         return getSetting(FERTILIZE).getValue();
@@ -191,6 +196,7 @@ public class BuildingFarmer extends AbstractBuilding
      * Get the offset to work at relative to the scarecrow.
      * @return the blockpos.
      */
+    @Override
     public BlockPos getWorkingOffset()
     {
         return workingOffset;
@@ -201,6 +207,7 @@ public class BuildingFarmer extends AbstractBuilding
      * @param i the value to set.
      * @return current value.
      */
+    @Override
     public int setCell(final int i)
     {
         cell = i;
@@ -211,6 +218,7 @@ public class BuildingFarmer extends AbstractBuilding
      * Get the current index within the current field
      * @return current value.
      */
+    @Override
     public int getCell()
     {
         return cell;
@@ -220,6 +228,7 @@ public class BuildingFarmer extends AbstractBuilding
      * Set the previous position which has been worked at.
      * @param position to set.
      */
+    @Override
     public void setPrevPos(final BlockPos position)
     {
         this.prevPos = position;
@@ -229,6 +238,7 @@ public class BuildingFarmer extends AbstractBuilding
      * Set the offset to work at relative to the scarecrow.
      * @param blockPos the pos to set.
      */
+    @Override
     public void setWorkingOffset(final BlockPos blockPos)
     {
         this.workingOffset = blockPos;
@@ -238,6 +248,7 @@ public class BuildingFarmer extends AbstractBuilding
      * Get the previous position which has been worked at.
      * @return current prev pos.
      */
+    @Override
     public BlockPos getPrevPos()
     {
         return prevPos;
@@ -285,7 +296,13 @@ public class BuildingFarmer extends AbstractBuilding
         @Override
         protected int getMaxExtensionCount()
         {
-            return building.getBuildingLevel();
+            // ZM: the Town Hall also hosts this module. It only claims fields while it hosts a farmer, and its limit comes from the profession table (a hut keeps its level).
+            if (building instanceof BuildingFarmer)
+            {
+                return building.getBuildingLevel();
+            }
+            final TownHallFarmerModule workplace = building.getModule(BuildingModules.TOWNHALL_FARMER_WORKPLACE);
+            return workplace != null && workplace.hasHostedFarmer() ? TownHallProfessions.hostedFarmerFieldLimit(building.getBuildingLevel()) : 0;
         }
 
         @Override

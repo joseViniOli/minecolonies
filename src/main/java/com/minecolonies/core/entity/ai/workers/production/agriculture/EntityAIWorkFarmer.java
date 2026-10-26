@@ -3,6 +3,8 @@ package com.minecolonies.core.entity.ai.workers.production.agriculture;
 import com.google.common.reflect.TypeToken;
 import com.minecolonies.api.advancements.AdvancementTriggers;
 import com.minecolonies.api.colony.buildingextensions.IBuildingExtension;
+import com.minecolonies.api.colony.buildings.IBuilding;
+import com.minecolonies.api.colony.buildings.workerbuildings.IFarmerWorkplace;
 import com.minecolonies.api.colony.interactionhandling.ChatPriority;
 import com.minecolonies.api.colony.requestsystem.requestable.StackList;
 import com.minecolonies.api.entity.ai.JobStatus;
@@ -23,7 +25,9 @@ import com.minecolonies.core.blocks.BlockScarecrow;
 import com.minecolonies.core.blocks.MinecoloniesCropBlock;
 import com.minecolonies.core.blocks.MinecoloniesFarmland;
 import com.minecolonies.core.colony.buildingextensions.FarmField;
+import com.minecolonies.core.colony.buildings.AbstractBuilding;
 import com.minecolonies.core.colony.buildings.modules.BuildingExtensionsModule;
+import com.minecolonies.core.colony.buildings.modules.BuildingModules;
 import com.minecolonies.core.colony.buildings.workerbuildings.BuildingFarmer;
 import com.minecolonies.core.colony.interactionhandling.StandardInteraction;
 import com.minecolonies.core.colony.jobs.JobFarmer;
@@ -70,7 +74,8 @@ import static com.minecolonies.core.colony.buildings.modules.BuildingModules.STA
 /**
  * Farmer AI class. Created: December 20, 2014
  */
-public class EntityAIWorkFarmer extends AbstractEntityAICrafting<JobFarmer, BuildingFarmer>
+// ZM: B is AbstractBuilding, the workplace is a farmer hut or a building that hosts the farmer (the Town Hall), see isAcceptedWorkBuilding.
+public class EntityAIWorkFarmer extends AbstractEntityAICrafting<JobFarmer, AbstractBuilding>
 {
     /**
      * Return to chest after this amount of stacks.
@@ -124,6 +129,11 @@ public class EntityAIWorkFarmer extends AbstractEntityAICrafting<JobFarmer, Buil
     private int skippedState = 0;
 
     /**
+     * ZM: The workplace data, see {@link #workplace()}.
+     */
+    private IFarmerWorkplace workplace;
+
+    /**
      * Constructor for the Farmer. Defines the tasks the Farmer executes.
      *
      * @param job a farmer job to use.
@@ -141,9 +151,36 @@ public class EntityAIWorkFarmer extends AbstractEntityAICrafting<JobFarmer, Buil
     }
 
     @Override
-    public Class<BuildingFarmer> getExpectedBuildingClass()
+    public Class<AbstractBuilding> getExpectedBuildingClass()
     {
-        return BuildingFarmer.class;
+        return AbstractBuilding.class;
+    }
+
+    /**
+     * ZM: Accepts the farmer hut and any building that hosts the farmer workplace module, which is the Town Hall.
+     *
+     * @param candidate the work building of the citizen.
+     * @return true if the farmer can work there.
+     */
+    @Override
+    protected boolean isAcceptedWorkBuilding(@Nullable final IBuilding candidate)
+    {
+        return candidate instanceof BuildingFarmer
+                 || (candidate instanceof final AbstractBuilding hosting && hosting.hasModule(BuildingModules.TOWNHALL_FARMER_WORKPLACE) && hosting.hasModule(FARMER_FIELDS));
+    }
+
+    /**
+     * ZM: The workplace data (field cursor, fertilizer) of this farmer: the hut itself, or the module the Town Hall hosts.
+     *
+     * @return the workplace data.
+     */
+    private IFarmerWorkplace workplace()
+    {
+        if (workplace == null)
+        {
+            workplace = building instanceof final IFarmerWorkplace hut ? hut : building.getModule(BuildingModules.TOWNHALL_FARMER_WORKPLACE);
+        }
+        return workplace;
     }
 
     /**
@@ -213,7 +250,7 @@ public class EntityAIWorkFarmer extends AbstractEntityAICrafting<JobFarmer, Buil
             return PREPARING;
         }
 
-        final BuildingExtensionsModule module = building.getFirstModuleOccurance(BuildingExtensionsModule.class);
+        final BuildingExtensionsModule module = building.getModule(FARMER_FIELDS);
         if (module.getOwnedExtensions().size() == building.getMaxBuildingLevel())
         {
             AdvancementUtils.TriggerAdvancementPlayersForColony(building.getColony(), AdvancementTriggers.MAX_FIELDS.get()::trigger);
@@ -224,7 +261,7 @@ public class EntityAIWorkFarmer extends AbstractEntityAICrafting<JobFarmer, Buil
 
         if (amountOfCompostInBuilding + amountOfCompostInInv <= 0)
         {
-            if (building.requestFertilizer() && !building.hasWorkerOpenRequestsOfType(worker.getCitizenData().getId(), TypeToken.of(StackList.class)))
+            if (workplace().requestFertilizer() && !building.hasWorkerOpenRequestsOfType(worker.getCitizenData().getId(), TypeToken.of(StackList.class)))
             {
                 final List<ItemStack> compostAbleItems = new ArrayList<>();
                 compostAbleItems.add(new ItemStack(ModItems.compost, 1));
@@ -313,13 +350,13 @@ public class EntityAIWorkFarmer extends AbstractEntityAICrafting<JobFarmer, Buil
         BlockPos position;
         do
         {
-            building.setWorkingOffset(nextValidCell(farmField));
-            if (building.getWorkingOffset() == null)
+            workplace().setWorkingOffset(nextValidCell(farmField));
+            if (workplace().getWorkingOffset() == null)
             {
                 return false;
             }
 
-            position = farmField.getPosition().below().south(building.getWorkingOffset().getZ()).east(building.getWorkingOffset().getX());
+            position = farmField.getPosition().below().south(workplace().getWorkingOffset().getZ()).east(workplace().getWorkingOffset().getX());
         }
         while (!predicate.test(position));
 
@@ -465,19 +502,19 @@ public class EntityAIWorkFarmer extends AbstractEntityAICrafting<JobFarmer, Buil
         int ring, ringCell, x, z;
         Direction facing;
 
-        if (building.getWorkingOffset() == null)
+        if (workplace().getWorkingOffset() == null)
         {
-            building.setCell(-1);
+            workplace().setCell(-1);
         }
 
         do
         {
-            if (building.setCell(building.getCell() + 1) == getLargestCell(farmField))
+            if (workplace().setCell(workplace().getCell() + 1) == getLargestCell(farmField))
             {
                 return null;
             }
-            ring = Math.max(1, (int) Math.floor((Math.sqrt(building.getCell() + 1D) + 1) / 2.0));
-            ringCell = building.getCell() - (int) (4 * Math.pow(ring - 1D, 2) + 4 * (ring - 1));
+            ring = Math.max(1, (int) Math.floor((Math.sqrt(workplace().getCell() + 1D) + 1) / 2.0));
+            ringCell = workplace().getCell() - (int) (4 * Math.pow(ring - 1D, 2) + 4 * (ring - 1));
             facing = Direction.from2DDataValue(Math.floorDiv(ringCell, 2 * ring));
 
 
@@ -514,15 +551,15 @@ public class EntityAIWorkFarmer extends AbstractEntityAICrafting<JobFarmer, Buil
      */
     private IAIState workAtField()
     {
-        final BuildingExtensionsModule module = building.getFirstModuleOccurance(BuildingExtensionsModule.class);
+        final BuildingExtensionsModule module = building.getModule(FARMER_FIELDS);
         final IBuildingExtension field = module.getCurrentExtension();
 
         worker.getCitizenData().setVisibleStatus(FARMING_ICON);
         if (field instanceof FarmField farmField)
         {
-            if (building.getWorkingOffset() != null)
+            if (workplace().getWorkingOffset() != null)
             {
-                final BlockPos position = farmField.getPosition().below().south(building.getWorkingOffset().getZ()).east(building.getWorkingOffset().getX());
+                final BlockPos position = farmField.getPosition().below().south(workplace().getWorkingOffset().getZ()).east(workplace().getWorkingOffset().getX());
 
                 // Still moving to the block
                 if (!walkToSafePos(position.above()))
@@ -559,12 +596,12 @@ public class EntityAIWorkFarmer extends AbstractEntityAICrafting<JobFarmer, Buil
                         return PREPARING;
                     }
                 }
-                building.setPrevPos(position);
+                workplace().setPrevPos(position);
                 setDelay(getLevelDelay());
             }
 
-            building.setWorkingOffset(nextValidCell(farmField));
-            if (building.getWorkingOffset() == null)
+            workplace().setWorkingOffset(nextValidCell(farmField));
+            if (workplace().getWorkingOffset() == null)
             {
                 shouldDumpInventory = true;
                 farmField.nextState();
@@ -575,7 +612,7 @@ public class EntityAIWorkFarmer extends AbstractEntityAICrafting<JobFarmer, Buil
                     skippedState = 0;
                 }
                 didWork = false;
-                building.setPrevPos(null);
+                workplace().setPrevPos(null);
                 return IDLE;
             }
         }
@@ -681,7 +718,11 @@ public class EntityAIWorkFarmer extends AbstractEntityAICrafting<JobFarmer, Buil
         super.onBlockDropReception(blockDrops);
         for (final ItemStack stack : blockDrops)
         {
-            building.getModule(STATS_MODULE).incrementBy(ITEM_OBTAINED + ";" + stack.getItem().getDescriptionId(), stack.getCount());
+            // ZM: the Town Hall has no statistics module
+            if (building.hasModule(STATS_MODULE))
+            {
+                building.getModule(STATS_MODULE).incrementBy(ITEM_OBTAINED + ";" + stack.getItem().getDescriptionId(), stack.getCount());
+            }
         }
     }
 
@@ -758,7 +799,7 @@ public class EntityAIWorkFarmer extends AbstractEntityAICrafting<JobFarmer, Buil
             && blockItem.getBlock().defaultBlockState().canSurvive(worker.level(), position.above()))
         {
             @NotNull final Item seed = item.getItem();
-            if ((seed == Items.MELON_SEEDS || seed == Items.PUMPKIN_SEEDS) && building.getPrevPos() != null && !world.isEmptyBlock(building.getPrevPos().above()))
+            if ((seed == Items.MELON_SEEDS || seed == Items.PUMPKIN_SEEDS) && workplace().getPrevPos() != null && !world.isEmptyBlock(workplace().getPrevPos().above()))
             {
                 return true;
             }

@@ -32,6 +32,18 @@ public final class TownHallProfessions
     public static final boolean HOSTED_LUMBERJACK_AI_READY = true;
 
     /**
+     * Switch for the farmer: true when the farmer AI keeps its job with the Town Hall as workplace (see EntityAIWorkFarmer and the TownHallHostedJobGameTest). Set to false to hide
+     * the profession again (0 slots, and the Town Hall stops claiming fields) without touching anything else.
+     */
+    public static final boolean HOSTED_FARMER_AI_READY = true;
+
+    /**
+     * Fields (scarecrows) a hosted farmer can work on, per Town Hall level: {@code level + 1}. A farmer hut allows as many fields as its own level; the Town Hall gives one more
+     * because its farmers have no hut to upgrade yet. All farmers hosted by the Town Hall share these fields.
+     */
+    private static final int HOSTED_FARMER_EXTRA_FIELDS = 1;
+
+    /**
      * Base slots of every profession.
      */
     private static final int BASE_SLOTS = 1;
@@ -186,7 +198,7 @@ public final class TownHallProfessions
     private static final List<Profession> ALL = Collections.unmodifiableList(List.of(
       new Profession("lumberjack", 1, SlotRule.COMMON, HOSTED_LUMBERJACK_AI_READY, List.of("lumberjack")),
       new Profession("builder", 1, SlotRule.BUILDER, false, List.of("builder")),
-      new Profession("farmer", 1, SlotRule.COMMON, false, List.of("farmer")),
+      new Profession("farmer", 1, SlotRule.COMMON, HOSTED_FARMER_AI_READY, List.of("farmer")),
       new Profession("quarry_miner", 1, SlotRule.COMMON, false, List.of("quarrier")),
       new Profession("guard", 1, SlotRule.GUARD, false, List.of("knight", "ranger"))));
 
@@ -240,6 +252,21 @@ public final class TownHallProfessions
     }
 
     /**
+     * Maximum number of fields the farmers hosted by a Town Hall can work on.
+     *
+     * @param thLevel the Town Hall level.
+     * @return the field limit, 0 while the farmer is not implemented or the Town Hall is not built.
+     */
+    public static int hostedFarmerFieldLimit(final int thLevel)
+    {
+        if (!HOSTED_FARMER_AI_READY || thLevel < 1)
+        {
+            return 0;
+        }
+        return Math.min(thLevel, MAX_LEVEL) + HOSTED_FARMER_EXTRA_FIELDS;
+    }
+
+    /**
      * Self check of the slot rules. The project has no JUnit on its test classpath, so this stays in the class and can be run on the compiled classes:
      * {@code java -cp build/classes/java/main com.minecolonies.core.colony.townhall.TownHallProfessions}. It throws when a rule is broken.
      *
@@ -285,6 +312,8 @@ public final class TownHallProfessions
         check(problems, byJob("quarrier").map(p -> p.id.equals("quarry_miner")).orElse(false), "quarrier must be the quarry_miner profession");
         check(problems, slotsForJob("baker", MAX_LEVEL) == 0, "unlisted jobs must have no slots");
         check(problems, available(0).isEmpty(), "level 0 must offer no profession");
+        check(problems, hostedFarmerFieldLimit(0) == 0, "an unbuilt Town Hall must not claim fields");
+        check(problems, !HOSTED_FARMER_AI_READY || (hostedFarmerFieldLimit(1) == 2 && hostedFarmerFieldLimit(MAX_LEVEL + 3) == MAX_LEVEL + 1), "hosted farmer fields are level + 1");
         return problems;
     }
 

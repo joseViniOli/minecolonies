@@ -397,6 +397,8 @@ public final class ModBuildingsInitializer
           .addBuildingModuleProducer(ITEMLIST_SAPLING)
           .addBuildingModuleProducer(TOWNHALL_BUILDER_WORK)
           .addBuildingModuleProducer(TOWNHALL_FARMER_WORK)
+          .addBuildingModuleProducer(TOWNHALL_FARMER_WORKPLACE)
+          .addBuildingModuleProducer(FARMER_FIELDS)
           .addBuildingModuleProducer(TOWNHALL_QUARRIER_WORK)
           .addBuildingModuleProducer(TOWNHALL_KNIGHT_WORK)
           .addBuildingModuleProducer(TOWNHALL_RANGER_WORK)

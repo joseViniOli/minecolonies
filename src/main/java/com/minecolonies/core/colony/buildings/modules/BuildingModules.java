@@ -547,6 +547,9 @@ public class BuildingModules
       new BuildingEntry.ModuleProducer<>("townhall_farmer_work",
         () -> new TownHallAssignmentModule(ModJobs.farmer.get(), Skill.Stamina, Skill.Athletics, false),
         () -> TownHallAssignmentModuleView::new);
+    // ZM: Workplace data of the farmer hosted by the Town Hall (server only): the cursor of the field work, read by EntityAIWorkFarmer when its workplace is not a hut.
+    public static final BuildingEntry.ModuleProducer<TownHallFarmerModule,IBuildingModuleView> TOWNHALL_FARMER_WORKPLACE =
+      new BuildingEntry.ModuleProducer<>("townhall_farmer_workplace", TownHallFarmerModule::new, null);
     public static final BuildingEntry.ModuleProducer<TownHallAssignmentModule,TownHallAssignmentModuleView> TOWNHALL_QUARRIER_WORK   =
       new BuildingEntry.ModuleProducer<>("townhall_quarrier_work",
         () -> new TownHallAssignmentModule(ModJobs.quarrier.get(), Skill.Strength, Skill.Stamina, false),
