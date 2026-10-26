@@ -24,8 +24,11 @@ import com.minecolonies.api.entity.ai.workers.util.IBuilderUndestroyable;
 import com.minecolonies.api.entity.citizen.AbstractEntityCitizen;
 import com.minecolonies.api.items.ModTags;
 import com.minecolonies.api.util.*;
-import com.minecolonies.core.colony.buildings.AbstractBuildingStructureBuilder;
+import com.minecolonies.api.colony.buildings.workerbuildings.IStructureWorkplace;
+import com.minecolonies.core.colony.buildings.AbstractBuilding;
 import com.minecolonies.core.colony.buildings.modules.BuildingResourcesModule;
+import com.minecolonies.core.colony.buildings.modules.TownHallBuilderModule;
+import com.minecolonies.core.colony.buildings.modules.settings.BlockSetting;
 import com.minecolonies.core.colony.buildings.utils.BuilderBucket;
 import com.minecolonies.core.colony.buildings.utils.BuildingBuilderResource;
 import com.minecolonies.core.colony.jobs.AbstractJobStructure;
@@ -72,12 +75,22 @@ import static com.minecolonies.core.entity.ai.workers.util.BuildingProgressStage
  *
  * @param <J> the job type this AI has to do.
  */
-public abstract class AbstractEntityAIStructure<J extends AbstractJobStructure<?, J>, B extends AbstractBuildingStructureBuilder> extends AbstractEntityAIInteract<J, B>
+public abstract class AbstractEntityAIStructure<J extends AbstractJobStructure<?, J>, B extends AbstractBuilding> extends AbstractEntityAIInteract<J, B>
 {
     /**
      * Building block delay
      */
     protected static final int BUILD_BLOCK_DELAY = 15;
+
+    /**
+     * ZM: The construction state (work order, progress, needed resources) of the workplace: the hut itself, or the module the Town Hall hosts.
+     *
+     * @return the construction state.
+     */
+    protected IStructureWorkplace workplace()
+    {
+        return TownHallBuilderModule.of(building);
+    }
 
     /**
      * The current structure task to be build.
@@ -222,7 +235,7 @@ public abstract class AbstractEntityAIStructure<J extends AbstractJobStructure<?
 
         final List<Tuple<Predicate<ItemStack>, Integer>> neededItemsList = new ArrayList<>();
 
-        final BuilderBucket neededRessourcesMap = building.getRequiredResources();
+        final BuilderBucket neededRessourcesMap = workplace().getRequiredResources();
         final BuildingResourcesModule module = building.getFirstModuleOccurance(BuildingResourcesModule.class);
         if (neededRessourcesMap != null)
         {
@@ -239,8 +252,8 @@ public abstract class AbstractEntityAIStructure<J extends AbstractJobStructure<?
 
         if (neededItemsList.size() <= pickUpCount || InventoryUtils.openSlotCount(worker.getInventoryCitizen()) <= MIN_OPEN_SLOTS)
         {
-            building.checkOrRequestBucket(building.getRequiredResources(), worker.getCitizenData());
-            building.checkOrRequestBucket(building.getNextBucket(), worker.getCitizenData());
+            workplace().checkOrRequestBucket(workplace().getRequiredResources(), worker.getCitizenData());
+            workplace().checkOrRequestBucket(workplace().getNextBucket(), worker.getCitizenData());
             pickUpCount = 0;
             return START_WORKING;
         }
@@ -433,21 +446,21 @@ public abstract class AbstractEntityAIStructure<J extends AbstractJobStructure<?
             Log.getLogger().error("Failed placement at: " + result.getBlockResult().getWorldPos().toShortString());
         }
 
-        final boolean firstIteration = building.getProgress() == null;
+        final boolean firstIteration = workplace().getProgress() == null;
         if (result.getBlockResult().getResult() == BlockPlacementResult.Result.FINISHED)
         {
 
-            building.nextStage();
+            workplace().nextStage();
             if (!goToNextStage(result))
             {
-                building.setProgressPos(null, null);
+                workplace().setProgressPos(null, null);
                 worker.getCitizenData().setStatusPosition(null);
                 return COMPLETE_BUILD;
             }
             this.storeProgressPos(NULL_POS, structurePlacer.getB().getStage());
             if (currentStage == CLEAR)
             {
-                building.checkOrRequestBucket(building.getRequiredResources(), worker.getCitizenData());
+                workplace().checkOrRequestBucket(workplace().getRequiredResources(), worker.getCitizenData());
             }
         }
         else if (result.getBlockResult().getResult() == BlockPlacementResult.Result.LIMIT_REACHED)
@@ -471,14 +484,14 @@ public abstract class AbstractEntityAIStructure<J extends AbstractJobStructure<?
 
         if (firstIteration)
         {
-            building.checkOrRequestBucket(building.getRequiredResources(), worker.getCitizenData());
+            workplace().checkOrRequestBucket(workplace().getRequiredResources(), worker.getCitizenData());
         }
 
         if (result.getBlockResult().getResult() == BlockPlacementResult.Result.MISSING_ITEMS)
         {
             if (hasListOfResInInvOrRequest(this, result.getBlockResult().getRequiredItems(), result.getBlockResult().getRequiredItems().size() > 1) == RECALC)
             {
-                building.getWorkOrder().setRequested(false);
+                workplace().getWorkOrder().setRequested(false);
                 return LOAD_STRUCTURE;
             }
             return NEEDS_ITEM;
@@ -517,7 +530,7 @@ public abstract class AbstractEntityAIStructure<J extends AbstractJobStructure<?
         }
         else
         {
-            return building.getWorkOrder().getLocation();
+            return workplace().getWorkOrder().getLocation();
         }
     }
 
@@ -703,7 +716,7 @@ public abstract class AbstractEntityAIStructure<J extends AbstractJobStructure<?
                 structure = new BuildingStructureHandler<>(world,
                     workOrder,
                     this, new BuildingProgressStage[] {REMOVE_WATER, REMOVE});
-                building.setTotalStages(2);
+                workplace().setTotalStages(2);
             }
             else if ((colonyBuilding != null && (colonyBuilding.getBuildingLevel() > 0 || colonyBuilding.hasParent())) ||
                        (entity instanceof TileEntityDecorationController && Utils.getBlueprintLevel(((TileEntityDecorationController) entity).getBlueprintPath()) != -1))
@@ -711,14 +724,14 @@ public abstract class AbstractEntityAIStructure<J extends AbstractJobStructure<?
                 structure = new BuildingStructureHandler<>(world,
                     workOrder,
                     this, new BuildingProgressStage[] {BUILD_SOLID, WEAK_SOLID, CLEAR_WATER, CLEAR_NON_SOLIDS, DECORATE, SPAWN});
-                building.setTotalStages(5);
+                workplace().setTotalStages(5);
             }
             else
             {
                 structure = new BuildingStructureHandler<>(world,
                     workOrder,
                     this, new BuildingProgressStage[] {CLEAR, BUILD_SOLID, WEAK_SOLID, CLEAR_WATER, CLEAR_NON_SOLIDS, DECORATE, SPAWN});
-                building.setTotalStages(6);
+                workplace().setTotalStages(6);
             }
 
             setStructurePlacer(structure);
@@ -749,7 +762,7 @@ public abstract class AbstractEntityAIStructure<J extends AbstractJobStructure<?
      * @param force    if force insertion.
      * @return true if need to request.
      */
-    public static <J extends AbstractJobStructure<?, J>, B extends AbstractBuildingStructureBuilder> ItemCheckResult hasListOfResInInvOrRequest(
+    public static <J extends AbstractJobStructure<?, J>, B extends AbstractBuilding> ItemCheckResult hasListOfResInInvOrRequest(
       @NotNull final AbstractEntityAIStructure<J, B> placer,
       final List<ItemStack> itemList,
       final boolean force)
@@ -774,7 +787,7 @@ public abstract class AbstractEntityAIStructure<J extends AbstractJobStructure<?
         for (final ItemStorage stack : requestedMap.keySet())
         {
             if (!InventoryUtils.hasItemInItemHandler(placer.getInventory(), stack1 -> ItemStackUtils.compareItemStacksIgnoreStackSize(stack.getItemStack(), stack1))
-                  && !placer.building.hasResourceInBucket(stack.getItemStack()))
+                  && !placer.workplace().hasResourceInBucket(stack.getItemStack()))
             {
                 return RECALC;
             }
@@ -990,7 +1003,7 @@ public abstract class AbstractEntityAIStructure<J extends AbstractJobStructure<?
      */
     protected boolean isThereAStructureToBuild()
     {
-        if (structurePlacer == null || !structurePlacer.getB().hasBluePrint() || building.getWorkOrder() == null)
+        if (structurePlacer == null || !structurePlacer.getB().hasBluePrint() || workplace().getWorkOrder() == null)
         {
             return false;
         }
@@ -1048,7 +1061,7 @@ public abstract class AbstractEntityAIStructure<J extends AbstractJobStructure<?
     {
         workFrom = null;
         structurePlacer = null;
-        building.setProgressPos(null, null);
+        workplace().setProgressPos(null, null);
         worker.getCitizenData().setStatusPosition(null);
     }
 
@@ -1087,7 +1100,9 @@ public abstract class AbstractEntityAIStructure<J extends AbstractJobStructure<?
      */
     public BlockState getSolidSubstitution(final BlockPos ignored, final Function<BlockPos, @Nullable BlockState> virtualBlocks)
     {
-        return building.getSetting(FILL_BLOCK).getValue().getBlock().defaultBlockState();
+        // ZM: the Town Hall has no fill block setting, it fills with dirt like the default of the builder hut
+        final BlockSetting fillBlock = building.getSetting(FILL_BLOCK);
+        return fillBlock == null ? Blocks.DIRT.defaultBlockState() : fillBlock.getValue().getBlock().defaultBlockState();
     }
 
     /**

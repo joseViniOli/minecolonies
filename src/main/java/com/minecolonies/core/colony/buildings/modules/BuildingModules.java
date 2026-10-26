@@ -543,6 +543,9 @@ public class BuildingModules
       new BuildingEntry.ModuleProducer<>("townhall_builder_work",
         () -> new TownHallAssignmentModule(ModJobs.builder.get(), Skill.Adaptability, Skill.Athletics, false),
         () -> TownHallAssignmentModuleView::new);
+    // ZM: Construction state of the builder hosted by the Town Hall (server only): claimed work order and progress, read by the structure AIs when their workplace is not a hut.
+    public static final BuildingEntry.ModuleProducer<TownHallBuilderModule,IBuildingModuleView> TOWNHALL_BUILDER_WORKPLACE =
+      new BuildingEntry.ModuleProducer<>("townhall_builder_workplace", TownHallBuilderModule::new, null);
     public static final BuildingEntry.ModuleProducer<TownHallAssignmentModule,TownHallAssignmentModuleView> TOWNHALL_FARMER_WORK     =
       new BuildingEntry.ModuleProducer<>("townhall_farmer_work",
         () -> new TownHallAssignmentModule(ModJobs.farmer.get(), Skill.Stamina, Skill.Athletics, false),

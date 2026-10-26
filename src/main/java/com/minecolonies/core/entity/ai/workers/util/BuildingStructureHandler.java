@@ -12,7 +12,7 @@ import com.minecolonies.api.equipment.ModEquipmentTypes;
 import com.minecolonies.api.util.*;
 import com.minecolonies.api.items.ModTags;
 import com.minecolonies.api.util.constant.Constants;
-import com.minecolonies.core.colony.buildings.AbstractBuildingStructureBuilder;
+import com.minecolonies.core.colony.buildings.AbstractBuilding;
 import com.minecolonies.core.colony.jobs.AbstractJobStructure;
 import com.minecolonies.core.entity.ai.workers.AbstractEntityAIStructure;
 import com.minecolonies.core.entity.pathfinding.navigation.EntityNavigationUtils;
@@ -42,7 +42,7 @@ import static com.minecolonies.api.util.constant.StatisticsConstants.BLOCKS_PLAC
  * <p>
  * It internally uses a structure it transparently loads.
  */
-public class BuildingStructureHandler<J extends AbstractJobStructure<?, J>, B extends AbstractBuildingStructureBuilder> extends AbstractStructureHandler
+public class BuildingStructureHandler<J extends AbstractJobStructure<?, J>, B extends AbstractBuilding> extends AbstractStructureHandler
 {
     /**
      * Amount of xp the builder gains for placing a block.

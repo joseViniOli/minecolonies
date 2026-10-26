@@ -3,6 +3,7 @@ package com.minecolonies.core.entity.ai.workers.builder;
 import com.ldtteam.structurize.placement.StructurePlacer;
 import com.minecolonies.api.colony.IColonyManager;
 import com.minecolonies.api.colony.buildings.IBuilding;
+import com.minecolonies.api.colony.buildings.workerbuildings.IBuilderWorkplace;
 import com.minecolonies.api.colony.workorders.IWorkOrder;
 import com.minecolonies.api.colony.workorders.WorkOrderType;
 import com.minecolonies.api.entity.ai.statemachine.states.IAIState;
@@ -11,6 +12,9 @@ import com.minecolonies.api.util.MessageUtils;
 import com.minecolonies.api.util.Tuple;
 import com.minecolonies.api.util.WorldUtil;
 import com.minecolonies.core.colony.buildings.modules.settings.BuilderModeSetting;
+import com.minecolonies.core.colony.buildings.AbstractBuilding;
+import com.minecolonies.core.colony.buildings.modules.BuildingModules;
+import com.minecolonies.core.colony.buildings.modules.TownHallBuilderModule;
 import com.minecolonies.core.colony.buildings.workerbuildings.BuildingBuilder;
 import com.minecolonies.core.colony.jobs.JobBuilder;
 import com.minecolonies.core.colony.workorders.WorkOrderBuilding;
@@ -30,6 +34,7 @@ import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import static com.minecolonies.api.entity.ai.statemachine.states.AIWorkerState.*;
 import static com.minecolonies.api.util.constant.TranslationConstants.COM_MINECOLONIES_COREMOD_ENTITY_BUILDER_MANUAL_SUFFIX;
@@ -37,7 +42,8 @@ import static com.minecolonies.api.util.constant.TranslationConstants.COM_MINECO
 /**
  * AI class for the builder. Manages building and repairing buildings.
  */
-public class EntityAIStructureBuilder extends AbstractEntityAIStructureWithWorkOrder<JobBuilder, BuildingBuilder>
+// ZM: B is AbstractBuilding, the workplace is a builder hut or a building that hosts the builder (the Town Hall), see isAcceptedWorkBuilding.
+public class EntityAIStructureBuilder extends AbstractEntityAIStructureWithWorkOrder<JobBuilder, AbstractBuilding>
 {
     /**
      * Speed buff at 0 depth level.
@@ -83,9 +89,32 @@ public class EntityAIStructureBuilder extends AbstractEntityAIStructureWithWorkO
     }
 
     @Override
-    public Class<BuildingBuilder> getExpectedBuildingClass()
+    public Class<AbstractBuilding> getExpectedBuildingClass()
     {
-        return BuildingBuilder.class;
+        return AbstractBuilding.class;
+    }
+
+    /**
+     * ZM: Accepts the builder hut and any building that hosts the builder workplace module, which is the Town Hall.
+     *
+     * @param candidate the work building of the citizen.
+     * @return true if the builder can work there.
+     */
+    @Override
+    protected boolean isAcceptedWorkBuilding(@Nullable final IBuilding candidate)
+    {
+        return candidate instanceof BuildingBuilder
+                 || (candidate instanceof final AbstractBuilding hosting && hosting.hasModule(BuildingModules.TOWNHALL_BUILDER_WORKPLACE) && hosting.hasModule(BuildingModules.BUILDING_RESOURCES));
+    }
+
+    /**
+     * ZM: The builder state (work order, progress, manual mode, purge of mobs) of this builder: the hut itself, or the module the Town Hall hosts.
+     *
+     * @return the builder state.
+     */
+    private IBuilderWorkplace builderWorkplace()
+    {
+        return TownHallBuilderModule.builderOf(building);
     }
 
     /**
@@ -95,19 +124,19 @@ public class EntityAIStructureBuilder extends AbstractEntityAIStructureWithWorkO
      */
     private boolean checkForWorkOrder()
     {
-        if (!building.hasWorkOrder())
+        if (!builderWorkplace().hasWorkOrder())
         {
-            building.setProgressPos(null, BuildingProgressStage.CLEAR);
+            builderWorkplace().setProgressPos(null, BuildingProgressStage.CLEAR);
             worker.getCitizenData().setStatusPosition(null);
             return false;
         }
 
-        final IWorkOrder wo = building.getWorkOrder();
+        final IWorkOrder wo = builderWorkplace().getWorkOrder();
 
         if (wo == null)
         {
-            building.setWorkOrder(null);
-            building.setProgressPos(null, null);
+            builderWorkplace().setWorkOrder(null);
+            builderWorkplace().setProgressPos(null, null);
             worker.getCitizenData().setStatusPosition(null);
             return false;
         }
@@ -115,7 +144,7 @@ public class EntityAIStructureBuilder extends AbstractEntityAIStructureWithWorkO
         final IBuilding building = job.getColony().getServerBuildingManager().getBuilding(wo.getLocation());
         if (building == null && wo instanceof WorkOrderBuilding && wo.getWorkOrderType() != WorkOrderType.REMOVE)
         {
-            this.building.complete(worker.getCitizenData());
+            this.builderWorkplace().complete(worker.getCitizenData());
             return false;
         }
 
@@ -123,15 +152,15 @@ public class EntityAIStructureBuilder extends AbstractEntityAIStructureWithWorkO
     }
 
     @Override
-    public void setStructurePlacer(final BuildingStructureHandler<JobBuilder, BuildingBuilder> structure)
+    public void setStructurePlacer(final BuildingStructureHandler<JobBuilder, AbstractBuilding> structure)
     {
-        if (building.getWorkOrder().getIteratorType().isEmpty())
+        if (builderWorkplace().getWorkOrder().getIteratorType().isEmpty())
         {
             final String mode = BuilderModeSetting.getActualValue(building);
-            building.getWorkOrder().setIteratorType(mode);
+            builderWorkplace().getWorkOrder().setIteratorType(mode);
         }
 
-        structurePlacer = new Tuple<>(new StructurePlacer(structure, building.getWorkOrder().getIteratorType()), structure);
+        structurePlacer = new Tuple<>(new StructurePlacer(structure, builderWorkplace().getWorkOrder().getIteratorType()), structure);
     }
 
     @Override
@@ -165,9 +194,9 @@ public class EntityAIStructureBuilder extends AbstractEntityAIStructureWithWorkO
      */
     private void killMobs()
     {
-        if (building.getBuildingLevel() >= LEVEL_TO_PURGE_MOBS && building.getWorkOrder() != null && building.getWorkOrder().getWorkOrderType() == WorkOrderType.BUILD)
+        if (building.getBuildingLevel() >= LEVEL_TO_PURGE_MOBS && builderWorkplace().getWorkOrder() != null && builderWorkplace().getWorkOrder().getWorkOrderType() == WorkOrderType.BUILD)
         {
-            final BlockPos buildingPos = building.getWorkOrder().getLocation();
+            final BlockPos buildingPos = builderWorkplace().getWorkOrder().getLocation();
             final IBuilding building = worker.getCitizenColonyHandler().getColonyOrRegister().getServerBuildingManager().getBuilding(buildingPos);
             if (building != null)
             {
@@ -179,10 +208,10 @@ public class EntityAIStructureBuilder extends AbstractEntityAIStructureWithWorkO
     @Override
     public void checkForExtraBuildingActions()
     {
-        if (!building.hasPurgedMobsToday())
+        if (!builderWorkplace().hasPurgedMobsToday())
         {
             killMobs();
-            building.setPurgedMobsToday(true);
+            builderWorkplace().setPurgedMobsToday(true);
         }
     }
 
@@ -219,7 +248,7 @@ public class EntityAIStructureBuilder extends AbstractEntityAIStructureWithWorkO
             {
                 final PathJobMoveCloseToXNearY pathJob = new PathJobMoveCloseToXNearY(world,
                     currentBlock,
-                    building.getWorkOrder().getLocation(),
+                    builderWorkplace().getWorkOrder().getLocation(),
                     4,
                     worker);
                 gotoPath = ((MinecoloniesAdvancedPathNavigate) worker.getNavigation()).setPathJob(pathJob, currentBlock, 1.0, false);
@@ -255,7 +284,7 @@ public class EntityAIStructureBuilder extends AbstractEntityAIStructureWithWorkO
 
         if (BlockPosUtil.getDistance2D(worker.blockPosition(), currentBlock) > 5)
         {
-            if (BlockPosUtil.dist(workFrom, building.getWorkOrder().getLocation()) < 100)
+            if (BlockPosUtil.dist(workFrom, builderWorkplace().getWorkOrder().getLocation()) < 100)
             {
                 prevBlockPosition = currentBlock;
                 workFrom = null;
@@ -299,7 +328,7 @@ public class EntityAIStructureBuilder extends AbstractEntityAIStructureWithWorkO
 
         final BlockPos position = wo.getLocation();
         boolean showManualSuffix = false;
-        if (building.getManualMode())
+        if (builderWorkplace().getManualMode())
         {
             showManualSuffix = true;
             for (final IWorkOrder workorder : building.getColony().getWorkManager().getWorkOrders().values())
@@ -335,6 +364,6 @@ public class EntityAIStructureBuilder extends AbstractEntityAIStructureWithWorkO
     @Override
     public boolean canGoIdle()
     {
-        return !building.hasWorkOrder();
+        return !builderWorkplace().hasWorkOrder();
     }
 }

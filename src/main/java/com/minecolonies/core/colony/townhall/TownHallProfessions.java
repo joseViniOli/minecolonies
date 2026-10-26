@@ -38,6 +38,12 @@ public final class TownHallProfessions
     public static final boolean HOSTED_FARMER_AI_READY = true;
 
     /**
+     * Switch for the builder: true when the builder AI keeps its job with the Town Hall as workplace AND the work order dispatch accepts the Town Hall as a builder (see
+     * EntityAIStructureBuilder, TownHallBuilderModule and the work order classes). Set to false to hide the profession again (0 slots) without touching anything else.
+     */
+    public static final boolean HOSTED_BUILDER_AI_READY = false;
+
+    /**
      * Fields (scarecrows) a hosted farmer can work on, per Town Hall level: {@code level + 1}. A farmer hut allows as many fields as its own level; the Town Hall gives one more
      * because its farmers have no hut to upgrade yet. All farmers hosted by the Town Hall share these fields.
      */
@@ -197,7 +203,7 @@ public final class TownHallProfessions
      */
     private static final List<Profession> ALL = Collections.unmodifiableList(List.of(
       new Profession("lumberjack", 1, SlotRule.COMMON, HOSTED_LUMBERJACK_AI_READY, List.of("lumberjack")),
-      new Profession("builder", 1, SlotRule.BUILDER, false, List.of("builder")),
+      new Profession("builder", 1, SlotRule.BUILDER, HOSTED_BUILDER_AI_READY, List.of("builder")),
       new Profession("farmer", 1, SlotRule.COMMON, HOSTED_FARMER_AI_READY, List.of("farmer")),
       new Profession("quarry_miner", 1, SlotRule.COMMON, false, List.of("quarrier")),
       new Profession("guard", 1, SlotRule.GUARD, false, List.of("knight", "ranger"))));

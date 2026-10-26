@@ -3,7 +3,7 @@ package com.minecolonies.core.entity.ai.workers.util;
 import com.ldtteam.structurize.api.RotationMirror;
 import com.ldtteam.structurize.blueprints.v1.Blueprint;
 import com.minecolonies.api.util.LoadOnlyStructureHandler;
-import com.minecolonies.core.colony.buildings.AbstractBuildingStructureBuilder;
+import com.minecolonies.core.colony.buildings.AbstractBuilding;
 import com.minecolonies.core.colony.jobs.AbstractJobStructure;
 import com.minecolonies.core.entity.ai.workers.AbstractEntityAIStructure;
 import net.minecraft.world.level.block.state.BlockState;
@@ -16,7 +16,7 @@ import java.util.function.Function;
 /**
  * Load only structure handler just to get dimensions etc from structures, not for placement specific for worker usage.
  */
-public final class WorkerLoadOnlyStructureHandler<J extends AbstractJobStructure<?, J>, B extends AbstractBuildingStructureBuilder> extends LoadOnlyStructureHandler
+public final class WorkerLoadOnlyStructureHandler<J extends AbstractJobStructure<?, J>, B extends AbstractBuilding> extends LoadOnlyStructureHandler
 {
     /**
      * The structure AI handling this task.

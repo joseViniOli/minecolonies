@@ -15,7 +15,6 @@ import com.minecolonies.api.inventory.InventoryCitizen;
 import com.minecolonies.api.util.InventoryUtils;
 import com.minecolonies.api.util.ItemStackUtils;
 import com.minecolonies.api.util.Utils;
-import com.minecolonies.core.colony.buildings.AbstractBuildingStructureBuilder;
 import com.minecolonies.core.colony.buildings.utils.BuilderBucket;
 import com.minecolonies.core.colony.buildings.utils.BuildingBuilderResource;
 import com.minecolonies.core.colony.jobs.AbstractJobStructure;
@@ -90,7 +89,7 @@ public class BuildingResourcesModule extends AbstractBuildingModule implements I
         final ICitizenData data = set.isEmpty() ? null : set.iterator().next();
         if (data != null && data.getJob() instanceof AbstractJobStructure)
         {
-            final IBuilderWorkOrder workOrder = ((AbstractBuildingStructureBuilder) building).getWorkOrder();
+            final IBuilderWorkOrder workOrder = TownHallBuilderModule.of(building).getWorkOrder();
             if (workOrder != null)
             {
                 buf.writeInt(workOrder.getID());
@@ -176,8 +175,8 @@ public class BuildingResourcesModule extends AbstractBuildingModule implements I
     public BuilderBucket getRequiredResources()
     {
         return (buckets.isEmpty()
-            || ((AbstractBuildingStructureBuilder) building).getProgress() == null
-            || ((AbstractBuildingStructureBuilder) building).getProgress().getB() == BuildingProgressStage.CLEAR) ? null : buckets.getFirst();
+            || TownHallBuilderModule.of(building).getProgress() == null
+            || TownHallBuilderModule.of(building).getProgress().getB() == BuildingProgressStage.CLEAR) ? null : buckets.getFirst();
     }
 
     /**
@@ -370,7 +369,7 @@ public class BuildingResourcesModule extends AbstractBuildingModule implements I
                 continue;
             }
 
-            building.createRequest(new Stack(itemStack.getItemStack(), requestCount * ((AbstractBuildingStructureBuilder) building).getResourceBatchMultiplier(), 1), true);
+            building.createRequest(new Stack(itemStack.getItemStack(), requestCount * TownHallBuilderModule.of(building).getResourceBatchMultiplier(), 1), true);
         }
     }
 

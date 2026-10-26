@@ -5,6 +5,7 @@ import com.minecolonies.api.colony.ICitizenData;
 import com.minecolonies.api.colony.IColony;
 import com.minecolonies.api.colony.IColonyView;
 import com.minecolonies.api.colony.buildings.modules.settings.ISettingKey;
+import com.minecolonies.api.colony.buildings.workerbuildings.IBuilderWorkplace;
 import com.minecolonies.api.colony.workorders.IBuilderWorkOrder;
 import com.minecolonies.api.colony.workorders.IServerWorkOrder;
 import com.minecolonies.api.equipment.ModEquipmentTypes;
@@ -35,7 +36,8 @@ import static com.minecolonies.api.util.constant.TranslationConstants.*;
 /**
  * The builders building.
  */
-public class BuildingBuilder extends AbstractBuildingStructureBuilder
+// ZM: implements IBuilderWorkplace so the builder AI also works for a Town Hall that hosts the builder (see TownHallBuilderModule).
+public class BuildingBuilder extends AbstractBuildingStructureBuilder implements IBuilderWorkplace
 {
     /**
      * Settings key for the building mode.
@@ -114,6 +116,7 @@ public class BuildingBuilder extends AbstractBuildingStructureBuilder
      *
      * @param purgedMobsToday true if so.
      */
+    @Override
     public void setPurgedMobsToday(final boolean purgedMobsToday)
     {
         this.purgedMobsToday = purgedMobsToday;
@@ -124,6 +127,7 @@ public class BuildingBuilder extends AbstractBuildingStructureBuilder
      *
      * @return true if so.
      */
+    @Override
     public boolean hasPurgedMobsToday()
     {
         return purgedMobsToday;
@@ -134,6 +138,7 @@ public class BuildingBuilder extends AbstractBuildingStructureBuilder
      *
      * @return false if he should.
      */
+    @Override
     public boolean getManualMode()
     {
         return getSetting(MODE).getValue().equals(MANUAL_SETTING);

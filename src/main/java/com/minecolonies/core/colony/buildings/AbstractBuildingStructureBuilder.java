@@ -2,6 +2,7 @@ package com.minecolonies.core.colony.buildings;
 
 import com.minecolonies.api.colony.ICitizenData;
 import com.minecolonies.api.colony.IColony;
+import com.minecolonies.api.colony.buildings.workerbuildings.IStructureWorkplace;
 import com.minecolonies.api.colony.jobs.registry.JobEntry;
 import com.minecolonies.api.colony.workorders.IBuilderWorkOrder;
 import com.minecolonies.api.colony.workorders.IWorkOrder;
@@ -39,7 +40,8 @@ import static com.minecolonies.core.colony.jobs.AbstractJobStructure.TAG_WORK_OR
 /**
  * The structureBuilder building.
  */
-public abstract class AbstractBuildingStructureBuilder extends AbstractBuilding
+// ZM: implements IStructureWorkplace so the structure worker AIs also work for a Town Hall that hosts the state (see TownHallBuilderModule).
+public abstract class AbstractBuildingStructureBuilder extends AbstractBuilding implements IStructureWorkplace
 {
     /**
      * The maximum upgrade of the building.
