@@ -3,16 +3,25 @@ package com.minecolonies.core.colony.buildings.modules;
 import com.minecolonies.api.colony.IColony;
 import com.minecolonies.api.colony.buildingextensions.IBuildingExtension;
 import com.minecolonies.api.colony.buildings.modules.AbstractBuildingModule;
+import com.minecolonies.api.colony.buildings.modules.IAltersRequiredItems;
 import com.minecolonies.api.colony.buildings.modules.IPersistentModule;
 import com.minecolonies.api.colony.buildings.modules.ITickingModule;
 import com.minecolonies.api.colony.buildings.workerbuildings.IFarmerWorkplace;
+import com.minecolonies.api.equipment.ModEquipmentTypes;
 import com.minecolonies.api.util.BlockPosUtil;
+import com.minecolonies.api.util.ItemStackUtils;
+import com.minecolonies.core.colony.buildingextensions.FarmField;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.item.ItemStack;
+import org.apache.logging.log4j.util.TriConsumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Predicate;
+
+import static com.minecolonies.api.util.constant.EquipmentLevelConstants.TOOL_LEVEL_WOOD_OR_GOLD;
 import static com.minecolonies.api.util.constant.NbtTagConstants.TAG_CELL;
 import static com.minecolonies.api.util.constant.NbtTagConstants.TAG_PREV_POS;
 import static com.minecolonies.api.util.constant.NbtTagConstants.TAG_WORKING_OFFSET;
@@ -24,7 +33,7 @@ import static com.minecolonies.api.util.constant.NbtTagConstants.TAG_WORKING_OFF
  * Limits of this first version: all farmers hosted by the Town Hall share one cursor and one set of fields. When the last hosted farmer is gone, the fields are given back so a
  * farmer hut can claim them.
  */
-public class TownHallFarmerModule extends AbstractBuildingModule implements IFarmerWorkplace, IPersistentModule, ITickingModule
+public class TownHallFarmerModule extends AbstractBuildingModule implements IFarmerWorkplace, IPersistentModule, ITickingModule, IAltersRequiredItems
 {
     /**
      * The offset to work at relative to the scarecrow.
@@ -124,6 +133,31 @@ public class TownHallFarmerModule extends AbstractBuildingModule implements IFar
     {
         final TownHallAssignmentModule work = building.getModule(BuildingModules.TOWNHALL_FARMER_WORK);
         return work != null && work.hasAssignedCitizen();
+    }
+
+    /**
+     * The farmer keeps his hoe, his axe and the seeds of his fields when he dumps his inventory into the shared chest of the Town Hall, like the farmer of a hut does.
+     *
+     * @param consumer consumer that adds the items.
+     */
+    @Override
+    public void alterItemsToBeKept(final TriConsumer<Predicate<ItemStack>, Integer, Boolean> consumer)
+    {
+        consumer.accept(stack -> ItemStackUtils.hasEquipmentLevel(stack, ModEquipmentTypes.hoe.get(), TOOL_LEVEL_WOOD_OR_GOLD, building.getMaxEquipmentLevel()), 1, true);
+        consumer.accept(stack -> ItemStackUtils.hasEquipmentLevel(stack, ModEquipmentTypes.axe.get(), TOOL_LEVEL_WOOD_OR_GOLD, building.getMaxEquipmentLevel()), 1, true);
+
+        final BuildingExtensionsModule fields = building.getModule(BuildingModules.FARMER_FIELDS);
+        if (fields == null)
+        {
+            return;
+        }
+        for (final IBuildingExtension extension : fields.getOwnedExtensions())
+        {
+            if (extension instanceof final FarmField farmField && !farmField.getSeed().isEmpty())
+            {
+                consumer.accept(stack -> ItemStack.isSameItem(farmField.getSeed(), stack), 64, true);
+            }
+        }
     }
 
     @Override

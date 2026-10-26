@@ -93,6 +93,11 @@ public final class WindowConstants
     public static final String BUTTON_PROFESSIONS = "professions";
 
     /**
+     * Id of the colony chest button of the Town Hall in the GUI.
+     */
+    public static final String BUTTON_COLONY_CHEST = "colonychest";
+
+    /**
      * Id of the mercenary button in the GUI.
      */
     public static final String BUTTON_TOWNHALLMAP = "map";

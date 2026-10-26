@@ -14,6 +14,7 @@ import com.minecolonies.core.client.gui.WindowHireWorker;
 import com.minecolonies.core.client.gui.map.WindowColonyMap;
 import com.minecolonies.core.colony.buildings.workerbuildings.BuildingTownHall;
 import com.minecolonies.core.network.messages.server.colony.ColonyNameStyleMessage;
+import com.minecolonies.core.network.messages.server.colony.OpenInventoryMessage;
 import com.minecolonies.core.network.messages.server.colony.ColonyStructureStyleMessage;
 import com.minecolonies.core.network.messages.server.colony.ColonyTextureStyleMessage;
 import com.minecolonies.core.network.messages.server.colony.TeamColonyColorChangeMessage;
@@ -103,6 +104,14 @@ public class WindowMainPage extends AbstractWindowTownHall
             final ButtonImage professionsButton = findPaneOfTypeByID(BUTTON_PROFESSIONS, ButtonImage.class);
             professionsButton.disable();
             PaneBuilders.tooltipBuilder().hoverPane(professionsButton).build().setText(Component.translatable("com.minecolonies.coremod.gui.townhall.professions.nobuilt"));
+        }
+        // ZM: the shared chest of the colony is the inventory of the Town Hall, the players donate to it and look into it here
+        registerButton(BUTTON_COLONY_CHEST, this::colonyChestClicked);
+        if (building.getBuildingLevel() < 1)
+        {
+            final ButtonImage chestButton = findPaneOfTypeByID(BUTTON_COLONY_CHEST, ButtonImage.class);
+            chestButton.disable();
+            PaneBuilders.tooltipBuilder().hoverPane(chestButton).build().setText(Component.translatable("com.minecolonies.coremod.gui.townhall.colonychest.nobuilt"));
         }
         registerButton(BUTTON_TOWNHALLMAP, this::mapButtonClicked);
         registerButton(BUTTON_PATREON, this::patreonClicked);
@@ -398,6 +407,14 @@ public class WindowMainPage extends AbstractWindowTownHall
     private void mercenaryClicked()
     {
         new WindowTownHallMercenary(buildingView.getColony()).open();
+    }
+
+    /**
+     * Opens the inventory of the Town Hall, the shared chest of the colony.
+     */
+    private void colonyChestClicked()
+    {
+        new OpenInventoryMessage(buildingView).sendToServer();
     }
 
     /**

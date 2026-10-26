@@ -26,6 +26,11 @@
                  label="$(com.minecolonies.coremod.gui.townhall.professions)" source="minecolonies:textures/gui/builderhut/builder_button_medium_large.png"
                  disabled="minecolonies:textures/gui/builderhut/builder_button_medium_large_disabled.png"/>
 
+    <!-- ZM: opens the inventory of the Town Hall, the shared chest of the colony -->
+    <button id="colonychest" size="129 17" pos="110 174"  color="black"
+                 label="$(com.minecolonies.coremod.gui.townhall.colonychest)" source="minecolonies:textures/gui/builderhut/builder_button_medium_large.png"
+                 disabled="minecolonies:textures/gui/builderhut/builder_button_medium_large_disabled.png"/>
+
     <!-- Visual Changes, Right Side -->
 
     <text label="$(com.minecolonies.coremod.gui.townhall.visual)" textalign="MIDDLE" pos="280 35" size="129 11" color="black"/>

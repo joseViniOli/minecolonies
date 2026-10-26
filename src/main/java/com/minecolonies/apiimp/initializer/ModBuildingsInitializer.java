@@ -391,6 +391,8 @@ public final class ModBuildingsInitializer
           .setBuildingViewProducer(() -> BuildingTownHall.View::new)
           .setRegistryName(new ResourceLocation(Constants.MOD_ID, ModBuildings.TOWNHALL_ID))
           .addBuildingModuleProducer(TOWNHALL_SETTINGS)
+          // ZM: the shared chest of the colony
+          .addBuildingModuleProducer(TOWNHALL_COLONY_CHEST)
           // ZM: professions the Town Hall can assign without a hut
           .addBuildingModuleProducer(TOWNHALL_LUMBERJACK_WORK)
           .addBuildingModuleProducer(TOWNHALL_LUMBERJACK_WORKPLACE)
