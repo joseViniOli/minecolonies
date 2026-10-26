@@ -8,6 +8,7 @@ import com.minecolonies.api.colony.buildings.IBuilding;
 import com.minecolonies.api.colony.workorders.IWorkManager;
 import com.minecolonies.api.colony.workorders.WorkOrderType;
 import com.minecolonies.core.colony.buildings.workerbuildings.BuildingBuilder;
+import com.minecolonies.core.colony.townhall.HostedBuilders;
 import com.minecolonies.core.entity.ai.workers.util.ConstructionTapeHelper;
 import com.minecolonies.core.util.AdvancementUtils;
 import net.minecraft.core.BlockPos;
@@ -157,8 +158,9 @@ public class WorkOrderBuilding extends AbstractWorkOrder
         //  - OR the WorkOrder is for the TownHall
         //  - OR the WorkOrder is not farther away than 100 blocks from any builder and not manually assigned
 
-        return building instanceof BuildingBuilder
-            && canBuildIgnoringDistance(building, building.getPosition(), building.getBuildingLevel())
+        // ZM: also a Town Hall that hosts a builder, with the level it counts for (see HostedBuilders)
+        return HostedBuilders.isBuilderWorkplace(building)
+            && canBuildIgnoringDistance(building, building.getPosition(), HostedBuilders.builderLevel(building))
             && (building.getPosition().distSqr(getLocation()) <= MAX_DISTANCE_SQ);
     }
 
@@ -186,7 +188,7 @@ public class WorkOrderBuilding extends AbstractWorkOrder
           .getBuildings()
           .values()
           .stream()
-          .noneMatch(building -> building instanceof BuildingBuilder && !building.getAllAssignedCitizen().isEmpty()
+          .noneMatch(building -> HostedBuilders.isBuilderWorkplace(building) && HostedBuilders.hasBuilder(building)
                                    && building.getPosition().distSqr(getLocation()) <= MAX_DISTANCE_SQ);
     }
 

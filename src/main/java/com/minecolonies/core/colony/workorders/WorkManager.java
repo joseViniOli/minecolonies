@@ -14,8 +14,9 @@ import com.minecolonies.api.util.ColonyUtils;
 import com.minecolonies.api.util.Log;
 import com.minecolonies.api.util.MessageUtils;
 import com.minecolonies.core.colony.Colony;
-import com.minecolonies.core.colony.buildings.AbstractBuildingStructureBuilder;
-import com.minecolonies.core.colony.buildings.modules.WorkerBuildingModule;
+import com.minecolonies.api.colony.buildings.workerbuildings.IStructureWorkplace;
+import com.minecolonies.core.colony.buildings.modules.TownHallBuilderModule;
+import com.minecolonies.core.colony.townhall.HostedBuilders;
 import com.minecolonies.core.colony.buildings.modules.settings.StringSetting;
 import com.minecolonies.core.util.AdvancementUtils;
 import net.minecraft.core.BlockPos;
@@ -100,9 +101,11 @@ public class WorkManager implements IWorkManager
             if (workOrder.isClaimed())
             {
                 final IBuilding building = colony.getServerBuildingManager().getBuilding(workOrder.getClaimedBy());
-                if (building instanceof AbstractBuildingStructureBuilder abstractBuildingStructureBuilder)
+                // ZM: the construction state is kept by the hut, or by the module of the Town Hall that hosts a builder
+                final IStructureWorkplace workplace = building == null ? null : TownHallBuilderModule.of(building);
+                if (workplace != null)
                 {
-                    abstractBuildingStructureBuilder.onWorkOrderCancellation(workOrder);
+                    workplace.onWorkOrderCancellation(workOrder);
                 }
             }
 
@@ -437,15 +440,17 @@ public class WorkManager implements IWorkManager
     {
         for (IBuilding building : colony.getServerBuildingManager().getBuildings().values())
         {
-            if (building instanceof AbstractBuildingStructureBuilder abstractBuildingStructureBuilder)
+            // ZM: a structure worker hut, or a Town Hall that hosts a builder (see HostedBuilders)
+            final IStructureWorkplace workplace = TownHallBuilderModule.of(building);
+            if (workplace != null)
             {
-                final @Nullable ICitizenData citizen = building.getModule(WorkerBuildingModule.class).getFirstCitizen();
+                final @Nullable ICitizenData citizen = HostedBuilders.getWorker(building);
                 if (citizen == null)
                 {
                     continue;
                 }
 
-                if (abstractBuildingStructureBuilder.hasWorkOrder())
+                if (workplace.hasWorkOrder())
                 {
                     continue;
                 }
@@ -454,7 +459,7 @@ public class WorkManager implements IWorkManager
                 {
                     if (order.getClaimedBy().equals(building.getPosition()))
                     {
-                        abstractBuildingStructureBuilder.setWorkOrder(order);
+                        workplace.setWorkOrder(order);
                         order.setClaimedBy(building.getID());
                         return;
                     }
@@ -469,7 +474,7 @@ public class WorkManager implements IWorkManager
 
                 if (predicate.test(building))
                 {
-                    abstractBuildingStructureBuilder.setWorkOrder(order);
+                    workplace.setWorkOrder(order);
                     order.setClaimedBy(building.getID());
                     return;
                 }

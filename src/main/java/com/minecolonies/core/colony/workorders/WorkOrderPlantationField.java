@@ -6,7 +6,7 @@ import com.minecolonies.api.colony.IColony;
 import com.minecolonies.api.colony.buildings.IBuilding;
 import com.minecolonies.api.colony.workorders.WorkOrderType;
 import com.minecolonies.api.util.MessageUtils;
-import com.minecolonies.core.colony.buildings.workerbuildings.BuildingBuilder;
+import com.minecolonies.core.colony.townhall.HostedBuilders;
 import com.minecolonies.core.colony.jobs.JobBuilder;
 import com.minecolonies.core.entity.ai.workers.util.ConstructionTapeHelper;
 import net.minecraft.core.BlockPos;
@@ -63,7 +63,8 @@ public class WorkOrderPlantationField extends AbstractWorkOrder
     @Override
     public boolean canBuild(final IBuilding building)
     {
-        return building instanceof BuildingBuilder;
+        // ZM: also a Town Hall that hosts a builder
+        return HostedBuilders.isBuilderWorkplace(building);
     }
     
     /**

@@ -44,6 +44,8 @@ import com.minecolonies.api.util.constant.TypeConstants;
 import com.minecolonies.api.util.constant.translation.RequestSystemTranslationConstants;
 import com.minecolonies.core.colony.Colony;
 import com.minecolonies.core.colony.buildings.modules.AbstractAssignedCitizenModule;
+import com.minecolonies.core.colony.buildings.modules.TownHallBuilderModule;
+import com.minecolonies.core.colony.townhall.HostedBuilders;
 import com.minecolonies.core.colony.buildings.modules.settings.BoolSetting;
 import com.minecolonies.core.colony.buildings.modules.settings.SettingKey;
 import com.minecolonies.core.colony.interactionhandling.RequestBasedInteraction;
@@ -487,8 +489,9 @@ public abstract class AbstractBuilding extends AbstractBuildingContainer
         if (!builder.equals(BlockPos.ZERO))
         {
             final IBuilding building = colony.getServerBuildingManager().getBuilding(builder);
-            if (building instanceof AbstractBuildingStructureBuilder &&
-                  (building.getBuildingLevel() >= workOrder.getTargetLevel() || canBeBuiltByBuilder(workOrder.getTargetLevel())))
+            // ZM: also a Town Hall that hosts a builder, with the level it counts for (see HostedBuilders)
+            if (building != null && TownHallBuilderModule.of(building) != null &&
+                  (HostedBuilders.builderLevel(building) >= workOrder.getTargetLevel() || canBeBuiltByBuilder(workOrder.getTargetLevel())))
             {
                 workOrder.setClaimedBy(builder);
             }

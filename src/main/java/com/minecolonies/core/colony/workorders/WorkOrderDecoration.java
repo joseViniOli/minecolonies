@@ -6,7 +6,7 @@ import com.minecolonies.api.colony.IColony;
 import com.minecolonies.api.colony.buildings.IBuilding;
 import com.minecolonies.api.colony.workorders.WorkOrderType;
 import com.minecolonies.api.util.MessageUtils;
-import com.minecolonies.core.colony.buildings.workerbuildings.BuildingBuilder;
+import com.minecolonies.core.colony.townhall.HostedBuilders;
 import com.minecolonies.core.colony.jobs.JobBuilder;
 import com.minecolonies.core.entity.ai.workers.util.ConstructionTapeHelper;
 import net.minecraft.core.BlockPos;
@@ -78,7 +78,8 @@ public class WorkOrderDecoration extends AbstractWorkOrder
     @SuppressWarnings(UNUSED_METHOD_PARAMETERS_SHOULD_BE_REMOVED)
     public boolean canBuild(final IBuilding building)
     {
-        return building instanceof BuildingBuilder && building.getBuildingLevel() > 0;
+        // ZM: also a Town Hall that hosts a builder
+        return HostedBuilders.isBuilderWorkplace(building) && HostedBuilders.builderLevel(building) > 0;
     }
 
     /**

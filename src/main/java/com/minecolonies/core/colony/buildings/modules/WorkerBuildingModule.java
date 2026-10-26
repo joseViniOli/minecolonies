@@ -8,6 +8,7 @@ import com.minecolonies.api.colony.buildings.IBuilding;
 import com.minecolonies.api.colony.buildings.HiringMode;
 import com.minecolonies.api.colony.buildings.IBuildingWorkerModule;
 import com.minecolonies.api.colony.buildings.modules.*;
+import com.minecolonies.api.colony.buildings.workerbuildings.IStructureWorkplace;
 import com.minecolonies.api.colony.jobs.IJob;
 import com.minecolonies.api.colony.jobs.ModJobs;
 import com.minecolonies.api.colony.jobs.registry.JobEntry;
@@ -334,7 +335,9 @@ public class WorkerBuildingModule extends AbstractAssignedCitizenModule
         }
         if (job.getJobRegistryEntry() == ModJobs.builder.get())
         {
-            return job.getWorkerAI() == null || job.isIdling();
+            // The work order is kept by the Town Hall while the builder is hosted, so a claimed order also keeps him there.
+            final IStructureWorkplace state = worker.getWorkBuilding() == null ? null : TownHallBuilderModule.of(worker.getWorkBuilding());
+            return (job.getWorkerAI() == null || job.isIdling()) && (state == null || !state.hasWorkOrder());
         }
         return true;
     }

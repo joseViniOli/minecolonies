@@ -13,7 +13,7 @@ import com.minecolonies.api.colony.workorders.*;
 import com.minecolonies.api.util.*;
 import com.minecolonies.api.util.constant.Constants;
 import com.minecolonies.api.util.constant.NbtTagConstants;
-import com.minecolonies.core.colony.buildings.workerbuildings.BuildingBuilder;
+import com.minecolonies.core.colony.townhall.HostedBuilders;
 import com.minecolonies.core.colony.workorders.view.*;
 import com.minecolonies.core.entity.ai.workers.util.BuildingProgressStage;
 import net.minecraft.core.BlockPos;
@@ -872,7 +872,8 @@ public abstract class AbstractWorkOrder implements IBuilderWorkOrder
           .getBuildings()
           .values()
           .stream()
-          .anyMatch(building -> building instanceof BuildingBuilder && !building.getAllAssignedCitizen().isEmpty() && building.getBuildingLevel() >= level);
+          // ZM: also a Town Hall that hosts a builder, with the level it counts for (see HostedBuilders)
+          .anyMatch(building -> HostedBuilders.isBuilderWorkplace(building) && HostedBuilders.hasBuilder(building) && HostedBuilders.builderLevel(building) >= level);
     }
 
     /**

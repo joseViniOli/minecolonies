@@ -41,13 +41,19 @@ public final class TownHallProfessions
      * Switch for the builder: true when the builder AI keeps its job with the Town Hall as workplace AND the work order dispatch accepts the Town Hall as a builder (see
      * EntityAIStructureBuilder, TownHallBuilderModule and the work order classes). Set to false to hide the profession again (0 slots) without touching anything else.
      */
-    public static final boolean HOSTED_BUILDER_AI_READY = false;
+    public static final boolean HOSTED_BUILDER_AI_READY = true;
 
     /**
      * Fields (scarecrows) a hosted farmer can work on, per Town Hall level: {@code level + 1}. A farmer hut allows as many fields as its own level; the Town Hall gives one more
      * because its farmers have no hut to upgrade yet. All farmers hosted by the Town Hall share these fields.
      */
     private static final int HOSTED_FARMER_EXTRA_FIELDS = 1;
+
+    /**
+     * Highest Town Hall level at which a builder without a hut still counts as level 1 in the work order level gate. From the next level on, the level of the Town Hall counts as
+     * the level of the builder, like the level of a builder hut.
+     */
+    private static final int HOSTED_BUILDER_LOW_GATE_MAX_LEVEL = 2;
 
     /**
      * Base slots of every profession.
@@ -258,6 +264,22 @@ public final class TownHallProfessions
     }
 
     /**
+     * The level a builder hosted by a Town Hall counts with in the work order level gate (decided by the project Director): level 1 while the Town Hall is level 1 or 2, so he can
+     * build level 1 huts and the Town Hall upgrade to level 2; from Town Hall level 3 the level of the Town Hall counts, as for a builder hut.
+     *
+     * @param thLevel the Town Hall level.
+     * @return the level of the builder, 0 while the Town Hall is not built.
+     */
+    public static int hostedBuilderLevel(final int thLevel)
+    {
+        if (thLevel < 1)
+        {
+            return 0;
+        }
+        return thLevel <= HOSTED_BUILDER_LOW_GATE_MAX_LEVEL ? 1 : Math.min(thLevel, MAX_LEVEL);
+    }
+
+    /**
      * Maximum number of fields the farmers hosted by a Town Hall can work on.
      *
      * @param thLevel the Town Hall level.
@@ -318,6 +340,12 @@ public final class TownHallProfessions
         check(problems, byJob("quarrier").map(p -> p.id.equals("quarry_miner")).orElse(false), "quarrier must be the quarry_miner profession");
         check(problems, slotsForJob("baker", MAX_LEVEL) == 0, "unlisted jobs must have no slots");
         check(problems, available(0).isEmpty(), "level 0 must offer no profession");
+        final int[] hostedBuilder = {1, 1, 3, 4, 5};
+        for (int level = 1; level <= MAX_LEVEL; level++)
+        {
+            check(problems, hostedBuilderLevel(level) == hostedBuilder[level - 1], "hosted builder level on Town Hall level " + level);
+        }
+        check(problems, hostedBuilderLevel(0) == 0, "an unbuilt Town Hall has no hosted builder level");
         check(problems, hostedFarmerFieldLimit(0) == 0, "an unbuilt Town Hall must not claim fields");
         check(problems, !HOSTED_FARMER_AI_READY || (hostedFarmerFieldLimit(1) == 2 && hostedFarmerFieldLimit(MAX_LEVEL + 3) == MAX_LEVEL + 1), "hosted farmer fields are level + 1");
         return problems;
