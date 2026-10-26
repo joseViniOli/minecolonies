@@ -1,0 +1,107 @@
+{
+  "schemaVersion": 1,
+  "maxTownHallLevel": 5,
+  "maxHutLevel": 5,
+  "professions": [
+    {
+      "id": "lumberjack",
+      "unlockLevel": 1,
+      "slotsByTownHallLevel": [0, 1, 2, 2, 3, 3],
+      "minecoloniesJobs": ["minecolonies:lumberjack"],
+      "mappingNote": "exact"
+    },
+    {
+      "id": "builder",
+      "unlockLevel": 1,
+      "slotsByTownHallLevel": [0, 1, 1, 2, 2, 2],
+      "minecoloniesJobs": ["minecolonies:builder"],
+      "mappingNote": "exact"
+    },
+    {
+      "id": "farmer",
+      "unlockLevel": 1,
+      "slotsByTownHallLevel": [0, 1, 2, 2, 3, 3],
+      "minecoloniesJobs": ["minecolonies:farmer"],
+      "mappingNote": "exact"
+    },
+    {
+      "id": "quarry_miner",
+      "unlockLevel": 1,
+      "slotsByTownHallLevel": [0, 1, 2, 2, 3, 3],
+      "minecoloniesJobs": ["minecolonies:quarrier"],
+      "mappingNote": "MineColonies calls the quarry worker 'quarrier'; 'minecolonies:miner' is the mine worker and is not mapped"
+    },
+    {
+      "id": "guard",
+      "unlockLevel": 1,
+      "slotsByTownHallLevel": [0, 2, 3, 4, 5, 6],
+      "minecoloniesJobs": ["minecolonies:knight", "minecolonies:ranger"],
+      "mappingNote": "MineColonies has no single guard job; the guard tower hires knight or ranger"
+    },
+    {
+      "id": "cook",
+      "unlockLevel": 2,
+      "slotsByTownHallLevel": [0, 0, 2, 2, 3, 3],
+      "minecoloniesJobs": ["minecolonies:cook"],
+      "mappingNote": "exact"
+    },
+    {
+      "id": "warehouse_keeper",
+      "unlockLevel": 2,
+      "slotsByTownHallLevel": [0, 0, 2, 2, 3, 3],
+      "minecoloniesJobs": [],
+      "mappingNote": "no MineColonies job; the fork creates it (warehouse inventory keeper)"
+    },
+    {
+      "id": "pokemon_recruiter",
+      "unlockLevel": 2,
+      "slotsByTownHallLevel": [0, 0, 2, 2, 3, 3],
+      "minecoloniesJobs": [],
+      "mappingNote": "Zombie Moon only; the fork creates it"
+    },
+    {
+      "id": "fisherman",
+      "unlockLevel": 3,
+      "slotsByTownHallLevel": [0, 0, 0, 2, 3, 3],
+      "minecoloniesJobs": ["minecolonies:fisherman"],
+      "mappingNote": "exact"
+    },
+    {
+      "id": "blacksmith",
+      "unlockLevel": 3,
+      "slotsByTownHallLevel": [0, 0, 0, 2, 3, 3],
+      "minecoloniesJobs": ["minecolonies:blacksmith"],
+      "mappingNote": "exact"
+    },
+    {
+      "id": "deliveryman",
+      "unlockLevel": 4,
+      "slotsByTownHallLevel": [0, 0, 0, 0, 3, 3],
+      "minecoloniesJobs": ["minecolonies:deliveryman"],
+      "mappingNote": "exact"
+    },
+    {
+      "id": "researcher",
+      "unlockLevel": 4,
+      "slotsByTownHallLevel": [0, 0, 0, 0, 3, 3],
+      "minecoloniesJobs": ["minecolonies:researcher"],
+      "mappingNote": "exact"
+    },
+    {
+      "id": "healer",
+      "unlockLevel": 5,
+      "slotsByTownHallLevel": [0, 0, 0, 0, 0, 3],
+      "minecoloniesJobs": ["minecolonies:healer"],
+      "mappingNote": "exact"
+    }
+  ],
+  "toolTierOrder": ["wood", "stone", "iron", "diamond"],
+  "toolTierByHutLevel": [
+    {"hutLevel": 0, "tier": "wood", "material": "wooden"},
+    {"hutLevel": 1, "tier": "stone", "material": "stone"},
+    {"hutLevel": 2, "tier": "iron", "material": "iron"},
+    {"hutLevel": 3, "tier": "diamond", "material": "diamond"},
+    {"hutLevel": 4, "tier": "diamond", "material": "diamond"},
+    {"hutLevel": 5, "tier": "diamond", "material": "diamond"}
+  ]
+}

@@ -163,6 +163,21 @@ public final class TownHallProfessions
             }
             return rule.slots(Math.min(thLevel, MAX_LEVEL));
         }
+
+        /**
+         * Slots of the profession by its rule alone, as if its worker AI were ready. Used to compare the table with the shared data file.
+         *
+         * @param thLevel the Town Hall level.
+         * @return the number of slots, 0 when the level is below the unlock level.
+         */
+        int slotsIgnoringImplementation(final int thLevel)
+        {
+            if (thLevel < unlockLevel)
+            {
+                return 0;
+            }
+            return rule.slots(Math.min(thLevel, MAX_LEVEL));
+        }
     }
 
     /**
